@@ -1,5 +1,5 @@
 /**
- * Persists mute state and colorblind-friendly ghost palette preference
+ * Persists and retrieves user settings (mute state, colorblind palette preference)
  * across sessions using localStorage.
  */
 
@@ -10,24 +10,28 @@ export type Settings = {
   colorblindPaletteEnabled: boolean;
 };
 
+/**
+ * Default settings.
+ */
 const DEFAULT_SETTINGS: Settings = {
   muteEnabled: false,
   colorblindPaletteEnabled: false,
 };
 
 /**
- * Retrieves settings from localStorage, falling back to defaults.
+ * Retrieves the settings object from localStorage.
+ * Returns defaults if not found or on parse error.
  */
 export function getSettings(): Settings {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return { ...DEFAULT_SETTINGS };
-    const parsed = JSON.parse(raw) as Partial<Settings>;
+    const parsed: Settings = JSON.parse(raw);
+    // Ensure all required fields exist (backward compatibility)
     return {
-      muteEnabled: typeof parsed.muteEnabled === 'boolean' ? parsed.muteEnabled : DEFAULT_SETTINGS.muteEnabled,
-      colorblindPaletteEnabled: typeof parsed.colorblindPaletteEnabled === 'boolean'
-        ? parsed.colorblindPaletteEnabled
-        : DEFAULT_SETTINGS.colorblindPaletteEnabled,
+      muteEnabled: parsed.muteEnabled ?? DEFAULT_SETTINGS.muteEnabled,
+      colorblindPaletteEnabled:
+        parsed.colorblindPaletteEnabled ?? DEFAULT_SETTINGS.colorblindPaletteEnabled,
     };
   } catch {
     return { ...DEFAULT_SETTINGS };
@@ -35,7 +39,7 @@ export function getSettings(): Settings {
 }
 
 /**
- * Saves settings to localStorage.
+ * Saves the settings object to localStorage.
  */
 export function saveSettings(settings: Settings): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
