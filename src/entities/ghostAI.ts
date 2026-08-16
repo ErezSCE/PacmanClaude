@@ -163,8 +163,12 @@ export function chooseTarget(
  * The target changes based on position so the ghost doesn't just stand still.
  */
 export function frightenedTarget(ghost: Ghost): TargetTile {
-  // Use a simple hash of position to produce pseudo-random but deterministic targets
-  const posHash = Math.floor(ghost.x * 31 + ghost.y * 17);
+  // Snap to integer tile coordinates so the target only changes when the
+  // ghost enters a new tile — using raw floating-point position would
+  // change the target every frame and could cause mid-tile reversals.
+  const tileX = Math.floor(ghost.x);
+  const tileY = Math.floor(ghost.y);
+  const posHash = tileX * 31 + tileY * 17;
   const row = Math.abs(posHash % 31) + 1;
   const col = Math.abs((posHash * 7 + 13) % 28);
   return { row, col };
@@ -175,13 +179,22 @@ export function blinkyTarget(pacman: PacMan): TargetTile {
   return { row: Math.floor(pacman.y), col: Math.floor(pacman.x) };
 }
 
-/** Pinky: ambush — targets 4 tiles ahead of Pac-Man in his current direction. */
+/**
+ * Pinky: ambush — targets 4 tiles ahead of Pac-Man in his current direction.
+ *
+ * Reproduces the classic arcade "overflow" bug: when Pac-Man faces UP, the
+ * original Z80 code that computed "4 tiles ahead" read both the row and
+ * column offset from the same calculation, causing the target to also
+ * shift 4 tiles to the LEFT in addition to 4 tiles up.
+ */
 export function pinkyTarget(pacman: PacMan): TargetTile {
   const offset = DIRECTION_OFFSETS[pacman.direction];
-  return {
-    row: Math.floor(pacman.y) + offset.row * 4,
-    col: Math.floor(pacman.x) + offset.col * 4,
-  };
+  let targetRow = Math.floor(pacman.y) + offset.row * 4;
+  let targetCol = Math.floor(pacman.x) + offset.col * 4;
+  if (pacman.direction === 'up') {
+    targetCol -= 4; // classic overflow bug
+  }
+  return { row: targetRow, col: targetCol };
 }
 
 /**

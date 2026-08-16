@@ -28,13 +28,18 @@ export const RELEASE_DELAYS: Record<GhostName, number> = {
  * Represents a single ghost entity with position, mode, and AI state.
  */
 export class Ghost {
-  x = 0;
-  y = 0;
+  x: number;
+  y: number;
   name: GhostName;
   mode: GhostMode = 'scatter';
   direction: Direction = 'up';
-  frightened = false;
   speed: number = GHOST_SPEED_NORMAL;
+
+  /** Whether the ghost is currently frightened. Derived from `mode` so the
+   * two can never fall out of sync. */
+  get frightened(): boolean {
+    return this.mode === 'frightened';
+  }
 
   /** Whether the ghost is currently flashing (warning before frightened ends). */
   flashing = false;
@@ -54,8 +59,17 @@ export class Ghost {
   /** The mode the ghost was in before entering frightened, for restoration. */
   private preFrightenedMode: 'chase' | 'scatter' = 'scatter';
 
-  constructor(name: GhostName) {
+  /** The ghost's starting position inside the ghost house, restored by
+   * {@link resetForRelease}. */
+  private readonly startX: number;
+  private readonly startY: number;
+
+  constructor(name: GhostName, startX = 0, startY = 0) {
     this.name = name;
+    this.startX = startX;
+    this.startY = startY;
+    this.x = startX;
+    this.y = startY;
     this.inGhostHouse = RELEASE_DELAYS[name] > 0;
   }
 
@@ -76,13 +90,15 @@ export class Ghost {
   /**
    * Resets the ghost to its staggered starting state — called at level
    * start and again after Pac-Man loses a life — restoring the
-   * deterministic release order.
+   * deterministic release order and returning it to its starting position
+   * inside the ghost house.
    */
   resetForRelease(): void {
+    this.x = this.startX;
+    this.y = this.startY;
     this.inGhostHouse = RELEASE_DELAYS[this.name] > 0;
     this.houseTimer = 0;
     this.mode = 'scatter';
-    this.frightened = false;
     this.flashing = false;
     this.speed = GHOST_SPEED_NORMAL;
     this.frightenedTimer = 0;
@@ -93,12 +109,19 @@ export class Ghost {
    * Applies the shared chase/scatter timer's current phase to this ghost,
    * unless it is currently frightened or has been eaten (those states are
    * managed independently and must not be overridden by the timer).
+   *
+   * Classic arcade behaviour: whenever the global mode actually flips
+   * between chase and scatter, the ghost immediately reverses direction.
    */
   applyModeTimer(timer: GhostModeTimer): void {
     if (this.mode === 'frightened' || this.mode === 'eaten') {
       return;
     }
-    this.mode = timer.getCurrentMode();
+    const newMode = timer.getCurrentMode();
+    if (newMode !== this.mode) {
+      this.direction = REVERSE_DIRECTION[this.direction];
+    }
+    this.mode = newMode;
   }
 
   /**
@@ -137,7 +160,6 @@ export class Ghost {
     }
 
     this.mode = 'frightened';
-    this.frightened = true;
     this.flashing = false;
     this.speed = GHOST_SPEED_FRIGHTENED;
     this.frightenedTimer = 0;
@@ -178,7 +200,6 @@ export class Ghost {
    */
   private exitFrightened(): void {
     this.mode = this.preFrightenedMode;
-    this.frightened = false;
     this.flashing = false;
     this.speed = GHOST_SPEED_NORMAL;
     this.frightenedTimer = 0;
@@ -193,7 +214,6 @@ export class Ghost {
   enterEaten(): void {
     this.mode = 'eaten';
     this.speed = GHOST_SPEED_EYES;
-    this.frightened = false;
     this.flashing = false;
     this.frightenedTimer = 0;
     this.frightenedDuration = 0;
@@ -216,7 +236,6 @@ export class Ghost {
   respawnFromHouse(): void {
     this.mode = 'scatter';
     this.speed = GHOST_SPEED_NORMAL;
-    this.frightened = false;
     this.flashing = false;
     this.inGhostHouse = false;
     this.frightenedTimer = 0;
