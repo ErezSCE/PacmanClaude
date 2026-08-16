@@ -20,9 +20,10 @@ export class ScreenManager {
   private _currentScreen: ScreenType = 'start';
   private gameOverScore: number = 0;
   private initialsInput: string = '';
+  private listenersSetup: boolean = false;
 
   constructor() {
-    this.setupEventListeners();
+    // Defer event listener setup until DOM is ready
   }
 
   get currentScreen(): ScreenType {
@@ -31,16 +32,22 @@ export class ScreenManager {
 
   /**
    * Setup event listeners for initials input and screen interactions.
+   * Called lazily on first show() to ensure DOM elements exist.
    */
   private setupEventListeners(): void {
-    const initialsInputEl = document.getElementById('initials-input') as HTMLInputElement;
+    if (this.listenersSetup) return;
+
+    const initialsInputEl = document.getElementById('initials-input') as HTMLInputElement | null;
     const submitInitialsBtn = document.getElementById('submit-initials-btn');
 
     if (initialsInputEl) {
       initialsInputEl.addEventListener('input', (e) => {
         const target = e.target as HTMLInputElement;
-        // Limit to 3 uppercase letters
-        this.initialsInput = target.value.toUpperCase().slice(0, 3);
+        // Filter to alphabetic characters only, uppercase, limit to 3
+        this.initialsInput = target.value
+          .replace(/[^A-Za-z]/g, '')
+          .toUpperCase()
+          .slice(0, 3);
         target.value = this.initialsInput;
       });
 
@@ -58,6 +65,8 @@ export class ScreenManager {
         }
       });
     }
+
+    this.listenersSetup = true;
   }
 
   /**
@@ -79,6 +88,9 @@ export class ScreenManager {
    * For game-over screen, pass the final score to check if it qualifies for high scores.
    */
   show(screen: ScreenType, score?: number): void {
+    // Ensure event listeners are set up before showing any screen
+    this.setupEventListeners();
+    
     this._currentScreen = screen;
 
     // Hide all screens first

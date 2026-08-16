@@ -12,13 +12,27 @@ export type HighScoreEntry = {
 
 /**
  * Retrieves the top-10 high scores from localStorage.
+ * Validates that the parsed data is an array of objects with initials (string) and score (number).
  */
 export function getHighScores(): HighScoreEntry[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
-    const parsed: HighScoreEntry[] = JSON.parse(raw);
-    return parsed.slice(0, 10);
+    const parsed = JSON.parse(raw);
+    
+    // Validate that parsed data is an array
+    if (!Array.isArray(parsed)) return [];
+    
+    // Filter to only valid entries and limit to 10
+    return parsed
+      .filter(
+        (e): e is HighScoreEntry =>
+          typeof e === 'object' &&
+          e !== null &&
+          typeof e.initials === 'string' &&
+          typeof e.score === 'number'
+      )
+      .slice(0, 10);
   } catch {
     return [];
   }

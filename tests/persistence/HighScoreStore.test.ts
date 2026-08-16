@@ -7,13 +7,8 @@ import {
 } from '../../src/persistence/HighScoreStore';
 
 describe('HighScoreStore', () => {
-  beforeEach(() => {
-    // Manually clear all localStorage keys
-    const keys = Object.keys(localStorage);
-    keys.forEach((key) => {
-      localStorage.removeItem(key);
-    });
-  });
+  // Global setup in tests/setup.ts already clears localStorage in beforeEach,
+  // so no manual clearing needed here.
 
   describe('[US-011#1] getHighScores returns empty array when no scores exist', () => {
     it('should return an empty array on first call', () => {
@@ -113,7 +108,7 @@ describe('HighScoreStore', () => {
 
   describe('[US-011#6] saveHighScore handles corrupted localStorage gracefully', () => {
     it('should recover from invalid JSON in localStorage', () => {
-      localStorage.setItem('high_scores', 'invalid json {]');
+      localStorage.setItem('pacman_high_scores', 'invalid json {]');
 
       // Should not throw and should treat as empty
       const scores = getHighScores();
