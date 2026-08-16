@@ -6,6 +6,7 @@ import {
   applyPaletteToCss,
   clearPaletteCache,
   refreshPalette,
+  toggleColorblindPalette,
   type GhostPalette,
 } from '../../src/rendering/ghostPalette';
 import type { GhostName } from '../../src/types/shared';
@@ -286,20 +287,13 @@ describe('ghostPalette', () => {
     });
 
     it('[US-013#28] toggles colorblindPaletteEnabled setting from false to true', () => {
-      const getSettingsSpy = vi.spyOn(SettingsStore, 'getSettings').mockReturnValue({
+      vi.spyOn(SettingsStore, 'getSettings').mockReturnValue({
         muteEnabled: false,
         colorblindPaletteEnabled: false,
       });
       const saveSettingsSpy = vi.spyOn(SettingsStore, 'saveSettings');
 
-      // Simulate the toggleColorblindPalette function from main.ts
-      const currentSettings = SettingsStore.getSettings();
-      const newSettings = {
-        ...currentSettings,
-        colorblindPaletteEnabled: !currentSettings.colorblindPaletteEnabled,
-      };
-      SettingsStore.saveSettings(newSettings);
-      refreshPalette();
+      toggleColorblindPalette();
 
       expect(saveSettingsSpy).toHaveBeenCalledWith({
         muteEnabled: false,
@@ -308,20 +302,13 @@ describe('ghostPalette', () => {
     });
 
     it('[US-013#29] toggles colorblindPaletteEnabled setting from true to false', () => {
-      const getSettingsSpy = vi.spyOn(SettingsStore, 'getSettings').mockReturnValue({
+      vi.spyOn(SettingsStore, 'getSettings').mockReturnValue({
         muteEnabled: false,
         colorblindPaletteEnabled: true,
       });
       const saveSettingsSpy = vi.spyOn(SettingsStore, 'saveSettings');
 
-      // Simulate the toggleColorblindPalette function from main.ts
-      const currentSettings = SettingsStore.getSettings();
-      const newSettings = {
-        ...currentSettings,
-        colorblindPaletteEnabled: !currentSettings.colorblindPaletteEnabled,
-      };
-      SettingsStore.saveSettings(newSettings);
-      refreshPalette();
+      toggleColorblindPalette();
 
       expect(saveSettingsSpy).toHaveBeenCalledWith({
         muteEnabled: false,
@@ -336,13 +323,7 @@ describe('ghostPalette', () => {
       });
       const saveSettingsSpy = vi.spyOn(SettingsStore, 'saveSettings');
 
-      // Simulate the toggleColorblindPalette function from main.ts
-      const currentSettings = SettingsStore.getSettings();
-      const newSettings = {
-        ...currentSettings,
-        colorblindPaletteEnabled: !currentSettings.colorblindPaletteEnabled,
-      };
-      SettingsStore.saveSettings(newSettings);
+      toggleColorblindPalette();
 
       expect(saveSettingsSpy).toHaveBeenCalled();
       expect(saveSettingsSpy).toHaveBeenCalledWith(expect.objectContaining({
@@ -366,14 +347,7 @@ describe('ghostPalette', () => {
         colorblindPaletteEnabled: true,
       });
 
-      // Simulate the toggleColorblindPalette function from main.ts
-      const currentSettings = SettingsStore.getSettings();
-      const newSettings = {
-        ...currentSettings,
-        colorblindPaletteEnabled: !currentSettings.colorblindPaletteEnabled,
-      };
-      SettingsStore.saveSettings(newSettings);
-      refreshPalette();
+      toggleColorblindPalette();
 
       // After toggle, the cache should be cleared and new palette applied
       const blinkyColor = document.documentElement.style.getPropertyValue('--ghost-blinky-color');
@@ -386,20 +360,13 @@ describe('ghostPalette', () => {
         colorblindPaletteEnabled: false,
       });
 
-      // Simulate the toggleColorblindPalette function from main.ts
-      const currentSettings = SettingsStore.getSettings();
-      const newSettings = {
-        ...currentSettings,
-        colorblindPaletteEnabled: !currentSettings.colorblindPaletteEnabled,
-      };
-      SettingsStore.saveSettings(newSettings);
-
       // Update mock to reflect the toggle
       vi.spyOn(SettingsStore, 'getSettings').mockReturnValue({
         muteEnabled: false,
         colorblindPaletteEnabled: true,
       });
-      refreshPalette();
+
+      toggleColorblindPalette();
 
       // Verify the colorblind palette is applied to CSS
       expect(document.documentElement.style.getPropertyValue('--ghost-blinky-color')).toBe(
@@ -423,13 +390,7 @@ describe('ghostPalette', () => {
       });
       const saveSettingsSpy = vi.spyOn(SettingsStore, 'saveSettings');
 
-      // Simulate the toggleColorblindPalette function from main.ts
-      const currentSettings = SettingsStore.getSettings();
-      const newSettings = {
-        ...currentSettings,
-        colorblindPaletteEnabled: !currentSettings.colorblindPaletteEnabled,
-      };
-      SettingsStore.saveSettings(newSettings);
+      toggleColorblindPalette();
 
       expect(saveSettingsSpy).toHaveBeenCalledWith({
         muteEnabled: true,

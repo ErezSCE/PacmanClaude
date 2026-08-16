@@ -1,5 +1,5 @@
 import { registerServiceWorker } from './sw-register';
-import { getCurrentPalette, applyPaletteToCss } from './rendering/ghostPalette';
+import { getCurrentPalette, applyPaletteToCss, toggleColorblindPalette } from './rendering/ghostPalette';
 
 /**
  * Application entry point.
@@ -12,6 +12,9 @@ async function boot(): Promise<void> {
 
   // Apply the current ghost palette (default or colorblind) from settings
   applyPaletteToCss(getCurrentPalette());
+
+  // Expose toggleColorblindPalette globally so the UI layer can call it
+  (window as any).toggleColorblindPalette = toggleColorblindPalette;
 
   // Future: initialise ScreenManager, InputManager, GameState, GameLoop here.
 }

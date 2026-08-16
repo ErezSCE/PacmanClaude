@@ -78,6 +78,9 @@ export function refreshPalette(): void {
 
 /**
  * Applies a palette to CSS variables.
+ * Sets CSS custom properties for each ghost color. These variables are available
+ * for use by DOM elements (e.g., for UI overlays), but the canvas rendering engine
+ * reads colors directly from the palette object via getCurrentPalette(), not from CSS.
  * Call this on app startup and when the palette setting changes.
  * @param palette - The palette to apply (DEFAULT_PALETTE or COLORBLIND_PALETTE)
  */
