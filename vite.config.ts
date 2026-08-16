@@ -1,8 +1,7 @@
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
-import { defineConfig as defineVitestConfig } from 'vitest/config';
 
-export default defineVitestConfig({
+export default defineConfig({
   root: '.',
   base: '/',
   build: {
