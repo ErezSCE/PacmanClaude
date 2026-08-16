@@ -1,4 +1,4 @@
-import { defineConfig } from 'vitest/config';
+import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
@@ -73,9 +73,8 @@ export default defineConfig({
     port: 3000,
   },
   test: {
-    globals: true,
+    globals: false,
     environment: 'jsdom',
     include: ['tests/**/*.test.ts'],
-    setupFiles: ['tests/setup.ts'],
   },
 });
