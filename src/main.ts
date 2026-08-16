@@ -1,4 +1,5 @@
 import { registerServiceWorker } from './sw-register';
+import { getCurrentPalette, applyPaletteToCss } from './rendering/ghostPalette';
 
 /**
  * Application entry point.
@@ -8,6 +9,9 @@ import { registerServiceWorker } from './sw-register';
 async function boot(): Promise<void> {
   // Register service worker for offline caching (PWA)
   await registerServiceWorker();
+
+  // Apply the current ghost palette (default or colorblind) from settings
+  applyPaletteToCss(getCurrentPalette());
 
   // Future: initialise ScreenManager, InputManager, GameState, GameLoop here.
 }

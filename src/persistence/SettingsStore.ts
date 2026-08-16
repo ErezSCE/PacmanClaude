@@ -28,14 +28,19 @@ export function getSettings(): Settings {
     if (!raw) return { ...DEFAULT_SETTINGS };
     const parsed = JSON.parse(raw);
     // Guard against non-object values (e.g., null, primitives, arrays)
-    if (typeof parsed !== 'object' || parsed === null) {
+    if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
       return { ...DEFAULT_SETTINGS };
     }
-    // Ensure all required fields exist (backward compatibility)
+    // Ensure all required fields exist with explicit type validation
     return {
-      muteEnabled: parsed.muteEnabled ?? DEFAULT_SETTINGS.muteEnabled,
+      muteEnabled:
+        typeof parsed.muteEnabled === 'boolean'
+          ? parsed.muteEnabled
+          : DEFAULT_SETTINGS.muteEnabled,
       colorblindPaletteEnabled:
-        parsed.colorblindPaletteEnabled ?? DEFAULT_SETTINGS.colorblindPaletteEnabled,
+        typeof parsed.colorblindPaletteEnabled === 'boolean'
+          ? parsed.colorblindPaletteEnabled
+          : DEFAULT_SETTINGS.colorblindPaletteEnabled,
     };
   } catch {
     return { ...DEFAULT_SETTINGS };

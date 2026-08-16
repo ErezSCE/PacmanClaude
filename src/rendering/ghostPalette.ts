@@ -33,12 +33,28 @@ export const COLORBLIND_PALETTE: GhostPalette = {
 };
 
 /**
+ * Cached palette to avoid repeated localStorage reads.
+ */
+let cachedPalette: GhostPalette | null = null;
+
+/**
  * Gets the current ghost palette based on settings.
  * Returns the appropriate palette (default or colorblind) based on the colorblindPaletteEnabled setting.
+ * Caches the result to avoid repeated localStorage reads.
  */
 export function getCurrentPalette(): GhostPalette {
-  const settings = getSettings();
-  return settings.colorblindPaletteEnabled ? COLORBLIND_PALETTE : DEFAULT_PALETTE;
+  if (cachedPalette === null) {
+    const settings = getSettings();
+    cachedPalette = settings.colorblindPaletteEnabled ? COLORBLIND_PALETTE : DEFAULT_PALETTE;
+  }
+  return cachedPalette;
+}
+
+/**
+ * Clears the cached palette. Call this when settings change.
+ */
+export function clearPaletteCache(): void {
+  cachedPalette = null;
 }
 
 /**

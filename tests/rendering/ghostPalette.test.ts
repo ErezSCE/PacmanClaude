@@ -4,6 +4,7 @@ import {
   COLORBLIND_PALETTE,
   getCurrentPalette,
   applyPaletteToCss,
+  clearPaletteCache,
   type GhostPalette,
 } from '../../src/rendering/ghostPalette';
 import type { GhostName } from '../../src/types/shared';
@@ -41,6 +42,7 @@ describe('ghostPalette', () => {
   describe('getCurrentPalette', () => {
     beforeEach(() => {
       localStorage.removeItem('pacman_settings');
+      clearPaletteCache();
       vi.clearAllMocks();
     });
 
@@ -93,7 +95,7 @@ describe('ghostPalette', () => {
     });
   });
 
-  describe('applyPaletteToCSS', () => {
+  describe('applyPaletteToCss', () => {
     beforeEach(() => {
       // Clear any inline styles from root element
       document.documentElement.style.cssText = '';
@@ -104,7 +106,7 @@ describe('ghostPalette', () => {
     });
 
     it('[US-013#20] applies DEFAULT_PALETTE colors to CSS custom properties', () => {
-      applyPaletteToCSS(DEFAULT_PALETTE);
+      applyPaletteToCss(DEFAULT_PALETTE);
 
       expect(document.documentElement.style.getPropertyValue('--ghost-blinky-color')).toBe(
         DEFAULT_PALETTE.blinky
@@ -121,7 +123,7 @@ describe('ghostPalette', () => {
     });
 
     it('[US-013#21] applies COLORBLIND_PALETTE colors to CSS custom properties', () => {
-      applyPaletteToCSS(COLORBLIND_PALETTE);
+      applyPaletteToCss(COLORBLIND_PALETTE);
 
       expect(document.documentElement.style.getPropertyValue('--ghost-blinky-color')).toBe(
         COLORBLIND_PALETTE.blinky
@@ -138,8 +140,8 @@ describe('ghostPalette', () => {
     });
 
     it('[US-013#22] overwrites previous palette when called multiple times', () => {
-      applyPaletteToCSS(DEFAULT_PALETTE);
-      applyPaletteToCSS(COLORBLIND_PALETTE);
+      applyPaletteToCss(DEFAULT_PALETTE);
+      applyPaletteToCss(COLORBLIND_PALETTE);
 
       expect(document.documentElement.style.getPropertyValue('--ghost-blinky-color')).toBe(
         COLORBLIND_PALETTE.blinky
@@ -147,7 +149,7 @@ describe('ghostPalette', () => {
     });
 
     it('[US-013#23] sets all four ghost color properties', () => {
-      applyPaletteToCSS(DEFAULT_PALETTE);
+      applyPaletteToCss(DEFAULT_PALETTE);
 
       const blinkyColor = document.documentElement.style.getPropertyValue('--ghost-blinky-color');
       const pinkyColor = document.documentElement.style.getPropertyValue('--ghost-pinky-color');
