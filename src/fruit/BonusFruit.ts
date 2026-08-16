@@ -31,6 +31,19 @@ export const FRUIT_SPAWN_POSITION: { readonly x: number; readonly y: number } = 
 };
 
 /**
+ * Resolves the fruit definition (name + points) for the given level.
+ * Levels beyond the highest defined key fall back to the highest entry (key, 5000 pts).
+ */
+export function getFruitForLevel(level: number): { name: string; points: number } {
+  const definedLevels = Object.keys(FRUIT_TABLE)
+    .map(Number)
+    .sort((a, b) => a - b);
+  const highestDefined = definedLevels[definedLevels.length - 1];
+  const clampedLevel = Math.min(Math.max(level, 1), highestDefined);
+  return FRUIT_TABLE[clampedLevel];
+}
+
+/**
  * Manages bonus fruit spawning, despawn timing, and level-scaled scoring.
  *
  * Consumers drive this class each frame via {@link BonusFruit.update}, passing
