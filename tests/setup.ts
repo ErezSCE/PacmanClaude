@@ -1,47 +1,45 @@
-import { beforeEach, afterEach } from 'vitest';
+import { beforeEach, afterEach, vi } from 'vitest';
 
-// Helper function to clear localStorage
-function clearLocalStorage() {
-  const keys = Object.keys(localStorage);
-  keys.forEach(key => {
-    localStorage.removeItem(key);
-  });
-}
+/**
+ * Global test setup: provide a working localStorage mock for jsdom environment.
+ * jsdom's default localStorage implementation is incomplete, so we provide a full mock.
+ */
 
-// Patch localStorage.clear() for jsdom compatibility
-// jsdom's localStorage doesn't have a clear() method by default
-// We need to add it to the Storage prototype
-if (typeof localStorage !== 'undefined' && typeof (localStorage as any).clear !== 'function') {
-  // Get the Storage prototype
-  const StorageProto = Object.getPrototypeOf(localStorage);
-  
-  // Add the clear method to the prototype
-  if (StorageProto) {
-    try {
-      // Use Object.defineProperty to add the clear method
-      Object.defineProperty(StorageProto, 'clear', {
-        value: clearLocalStorage,
-        writable: true,
-        enumerable: false,
-        configurable: true,
-      });
-    } catch (e) {
-      // If that doesn't work, try adding it directly to the instance
-      try {
-        (localStorage as any).clear = clearLocalStorage;
-      } catch (e2) {
-        // If that doesn't work either, we'll handle it in the tests
-        console.warn('Could not patch localStorage.clear()');
-      }
-    }
-  }
-}
+// Create a simple in-memory localStorage implementation
+const localStorageMock = (() => {
+  let store: Record<string, string> = {};
 
-// Ensure localStorage is properly initialized for tests
+  return {
+    getItem: (key: string) => store[key] || null,
+    setItem: (key: string, value: string) => {
+      store[key] = String(value);
+    },
+    removeItem: (key: string) => {
+      delete store[key];
+    },
+    clear: () => {
+      store = {};
+    },
+    get length() {
+      return Object.keys(store).length;
+    },
+    key: (index: number) => {
+      const keys = Object.keys(store);
+      return keys[index] || null;
+    },
+  };
+})();
+
+// Replace global localStorage with our mock
+Object.defineProperty(window, 'localStorage', {
+  value: localStorageMock,
+  writable: true,
+});
+
 beforeEach(() => {
-  clearLocalStorage();
+  localStorage.clear();
 });
 
 afterEach(() => {
-  clearLocalStorage();
+  localStorage.clear();
 });
