@@ -1,13 +1,5 @@
 /* Pac-Man SPA — Global Styles */
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
 :root {
   --game-bg: #000;
   --text-color: #fff;
@@ -16,25 +8,7 @@
   --font-family: 'Press Start 2P', 'Courier New', monospace;
 }
 
-html,
-body {
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  background-color: var(--game-bg);
-  color: var(--text-color);
-  font-family: var(--font-family);
-}
-
-#app {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 100%;
-  position: relative;
-}
-
+/* ── Canvas ─────────────────────────────────────────────── */
 #game-canvas {
   display: block;
   image-rendering: pixelated;
@@ -42,7 +16,8 @@ body {
   max-height: 100%;
 }
 
-#screen-overlay {
+/* ── Overlay (matches #overlay in index.html) ──────────── */
+#overlay {
   position: absolute;
   inset: 0;
   display: flex;
@@ -51,26 +26,105 @@ body {
   pointer-events: none;
 }
 
-#screen-overlay > * {
+#overlay > * {
   pointer-events: auto;
 }
 
-/* Focus indicators for keyboard accessibility */
+/* ── Screen panels (rendered by ScreenManager) ─────────── */
+.screen-panel {
+  background: rgba(0, 0, 0, 0.92);
+  border: 2px solid var(--maze-blue);
+  border-radius: 8px;
+  padding: 2rem 2.5rem;
+  text-align: center;
+  min-width: 280px;
+  max-width: 90vw;
+  color: var(--text-color);
+  font-family: var(--font-family);
+}
+
+.screen-title {
+  font-size: 1.5rem;
+  color: var(--pacman-yellow);
+  margin-bottom: 1.5rem;
+  letter-spacing: 2px;
+}
+
+.screen-subtitle {
+  font-size: 0.75rem;
+  margin-bottom: 1.5rem;
+  opacity: 0.8;
+}
+
+.screen-hint {
+  font-size: 0.6rem;
+  margin-top: 1.5rem;
+  opacity: 0.6;
+}
+
+.screen-button {
+  display: block;
+  width: 100%;
+  padding: 0.75rem 1.5rem;
+  margin: 0.5rem 0;
+  font-family: var(--font-family);
+  font-size: 0.85rem;
+  color: var(--text-color);
+  background: var(--maze-blue);
+  border: 2px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.15s, border-color 0.15s;
+}
+
+.screen-button:hover {
+  background: #3333ff;
+}
+
+.screen-button:active {
+  background: #1a1aaa;
+}
+
+/* ── Focus indicators for keyboard accessibility ───────── */
+.screen-button:focus-visible {
+  outline: 3px solid var(--pacman-yellow);
+  outline-offset: 2px;
+  border-color: var(--pacman-yellow);
+}
+
 :focus-visible {
   outline: 3px solid var(--pacman-yellow);
   outline-offset: 2px;
 }
 
-/* Responsive scaling */
+/* ── Responsive scaling ────────────────────────────────── */
 @media (max-width: 375px) {
-  #app {
-    padding: 4px;
+  .screen-panel {
+    padding: 1rem 1.25rem;
+    min-width: auto;
+  }
+
+  .screen-title {
+    font-size: 1.1rem;
+  }
+
+  .screen-button {
+    font-size: 0.7rem;
+    padding: 0.5rem 1rem;
   }
 }
 
 @media (min-width: 2560px) {
-  #app {
-    max-width: 2560px;
-    margin: 0 auto;
+  .screen-panel {
+    min-width: 400px;
+  }
+
+  .screen-title {
+    font-size: 2rem;
+  }
+
+  .screen-button {
+    font-size: 1.1rem;
+    padding: 1rem 2rem;
   }
 }
