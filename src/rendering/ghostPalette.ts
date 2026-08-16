@@ -4,7 +4,7 @@
  */
 
 import type { GhostName } from '../types/shared';
-import { getSettings } from '../persistence/SettingsStore';
+import { getSettings, saveSettings } from '../persistence/SettingsStore';
 
 /**
  * Type for ghost color palettes, keyed by ghost name.
@@ -34,6 +34,8 @@ export const COLORBLIND_PALETTE: GhostPalette = {
 
 /**
  * Cached palette to avoid repeated localStorage reads.
+ * IMPORTANT: This cache must be cleared whenever settings change.
+ * Always call clearPaletteCache() after saveSettings() to ensure the palette stays in sync.
  */
 let cachedPalette: GhostPalette | null = null;
 
@@ -41,6 +43,11 @@ let cachedPalette: GhostPalette | null = null;
  * Gets the current ghost palette based on settings.
  * Returns the appropriate palette (default or colorblind) based on the colorblindPaletteEnabled setting.
  * Caches the result to avoid repeated localStorage reads.
+ *
+ * IMPORTANT: The cache is NOT automatically invalidated when settings change.
+ * If you call saveSettings() to toggle colorblindPaletteEnabled, you MUST also call
+ * clearPaletteCache() and applyPaletteToCss(getCurrentPalette()) to update the UI.
+ * Consider using toggleColorblindPalette() instead, which handles this automatically.
  */
 export function getCurrentPalette(): GhostPalette {
   if (cachedPalette === null) {
@@ -55,6 +62,22 @@ export function getCurrentPalette(): GhostPalette {
  */
 export function clearPaletteCache(): void {
   cachedPalette = null;
+}
+
+/**
+ * Toggles the colorblind palette setting and applies it immediately.
+ * This is the recommended way to change the palette at runtime.
+ * Handles cache invalidation and CSS updates automatically.
+ */
+export function toggleColorblindPalette(): void {
+  const currentSettings = getSettings();
+  const newSettings = {
+    ...currentSettings,
+    colorblindPaletteEnabled: !currentSettings.colorblindPaletteEnabled,
+  };
+  saveSettings(newSettings);
+  clearPaletteCache();
+  applyPaletteToCss(getCurrentPalette());
 }
 
 /**

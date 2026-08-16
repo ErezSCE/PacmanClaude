@@ -119,8 +119,7 @@ describe('SettingsStore', () => {
       };
 
       // Mock localStorage.setItem to throw QuotaExceededError
-      const originalSetItem = localStorage.setItem;
-      localStorage.setItem = vi.fn(() => {
+      vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
         const error = new DOMException('QuotaExceededError');
         error.name = 'QuotaExceededError';
         throw error;
@@ -128,9 +127,6 @@ describe('SettingsStore', () => {
 
       // Should not throw
       expect(() => saveSettings(testSettings)).not.toThrow();
-
-      // Restore original
-      localStorage.setItem = originalSetItem;
     });
 
     it('[US-013#11] handles localStorage unavailable errors gracefully', () => {
@@ -140,16 +136,12 @@ describe('SettingsStore', () => {
       };
 
       // Mock localStorage.setItem to throw a generic error
-      const originalSetItem = localStorage.setItem;
-      localStorage.setItem = vi.fn(() => {
+      vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
         throw new Error('Storage unavailable');
       });
 
       // Should not throw
       expect(() => saveSettings(testSettings)).not.toThrow();
-
-      // Restore original
-      localStorage.setItem = originalSetItem;
     });
   });
 });

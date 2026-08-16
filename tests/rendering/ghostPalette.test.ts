@@ -48,6 +48,7 @@ describe('ghostPalette', () => {
 
     afterEach(() => {
       localStorage.removeItem('pacman_settings');
+      clearPaletteCache();
       vi.clearAllMocks();
     });
 
