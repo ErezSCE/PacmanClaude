@@ -7,11 +7,16 @@ let animationFrameId: number | null = null;
 
 /**
  * Starts the game loop with the given update and render callbacks.
+ * If a loop is already running, it is stopped before starting the new one.
  */
 export function startGameLoop(
   update: (dt: number) => void,
   render: () => void,
 ): void {
+  if (animationFrameId !== null) {
+    stopGameLoop();
+  }
+
   const TIMESTEP = 1000 / 60;
   let lastTime = performance.now();
   let accumulator = 0;
