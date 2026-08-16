@@ -1,23 +1,29 @@
 /**
  * Fixed-timestep requestAnimationFrame loop that drives update() and render()
  * every frame, coordinating entities, collisions, scoring and level state.
+ *
+ * All mutable loop state (animation frame id, last frame time, accumulator)
+ * is encapsulated per-call rather than held at module scope, so multiple
+ * independent loops can run/stop without sharing state (important for
+ * testability and for any future multi-instance use).
  */
 
-let animationFrameId: number | null = null;
+/** Handle returned by `startGameLoop`, used to stop that specific loop instance. */
+export interface GameLoopHandle {
+  stop: () => void;
+}
+
+const TIMESTEP = 1000 / 60;
 
 /**
- * Starts the game loop with the given update and render callbacks.
- * If a loop is already running, it is stopped before starting the new one.
+ * Starts a new game loop with the given update and render callbacks and
+ * returns a handle that can be passed to `stopGameLoop` to stop it.
  */
 export function startGameLoop(
   update: (dt: number) => void,
   render: () => void,
-): void {
-  if (animationFrameId !== null) {
-    stopGameLoop();
-  }
-
-  const TIMESTEP = 1000 / 60;
+): GameLoopHandle {
+  let animationFrameId: number | null = null;
   let lastTime = performance.now();
   let accumulator = 0;
 
@@ -36,14 +42,20 @@ export function startGameLoop(
   }
 
   animationFrameId = requestAnimationFrame(loop);
+
+  return {
+    stop(): void {
+      if (animationFrameId !== null) {
+        cancelAnimationFrame(animationFrameId);
+        animationFrameId = null;
+      }
+    },
+  };
 }
 
 /**
- * Stops the game loop.
+ * Stops the game loop associated with the given handle.
  */
-export function stopGameLoop(): void {
-  if (animationFrameId !== null) {
-    cancelAnimationFrame(animationFrameId);
-    animationFrameId = null;
-  }
+export function stopGameLoop(handle: GameLoopHandle): void {
+  handle.stop();
 }

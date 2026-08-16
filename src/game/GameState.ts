@@ -18,10 +18,25 @@ const MIN_FRIGHTENED_DURATION_MS = 1000;
 const BASE_SCATTER_DURATION_MS = 7000;
 const MIN_SCATTER_DURATION_MS = 2000;
 
+/** Decimal precision applied to ghostSpeedMultiplier to avoid float noise (e.g. 0.7710526315789473). */
+const GHOST_SPEED_MULTIPLIER_PRECISION = 4;
+
 export interface DifficultySettings {
   ghostSpeedMultiplier: number;
   frightenedDurationMs: number;
   scatterDurationMs: number;
+}
+
+/**
+ * Options accepted by `GameState.completeLevel` / `GameState.checkLevelComplete`.
+ * An options object (rather than positional params) avoids the
+ * required-after-optional smell when callers only want to override one field.
+ */
+export interface LevelTransitionOptions {
+  /** Invoked once the transition timer elapses and the next level is ready to play. */
+  onNextLevel?: () => void;
+  /** Overrides the default transition duration (ms). */
+  transitionMs?: number;
 }
 
 /**
@@ -33,9 +48,12 @@ export function getDifficultySettings(level: number): DifficultySettings {
   const progress =
     MAX_DIFFICULTY_LEVEL > 1 ? (cappedLevel - 1) / (MAX_DIFFICULTY_LEVEL - 1) : 1;
 
-  const ghostSpeedMultiplier =
+  const rawGhostSpeedMultiplier =
     BASE_GHOST_SPEED_MULTIPLIER +
     (MAX_GHOST_SPEED_MULTIPLIER - BASE_GHOST_SPEED_MULTIPLIER) * progress;
+  const ghostSpeedMultiplier = Number(
+    rawGhostSpeedMultiplier.toFixed(GHOST_SPEED_MULTIPLIER_PRECISION),
+  );
 
   const frightenedDurationMs = Math.round(
     BASE_FRIGHTENED_DURATION_MS -
@@ -53,6 +71,19 @@ export function getDifficultySettings(level: number): DifficultySettings {
 /**
  * Tracks the current game session's mutable state: score, lives, level
  * number, pause/game-over flags, and level-complete/transition timing.
+ *
+ * Timer ownership: `GameState` is the single authoritative timer for the
+ * level-complete transition. Consumers that also show a "Level Complete"
+ * overlay (e.g. `ScreenManager.showLevelComplete`) must NOT run their own
+ * competing dismiss timer — they should display the overlay immediately
+ * when `checkLevelComplete`/`completeLevel` returns `true`, and dismiss it
+ * from the `onNextLevel` callback passed here, e.g.:
+ *
+ * ```ts
+ * if (gameState.checkLevelComplete(remainingDots, { onNextLevel: () => screenManager.dismissLevelComplete() })) {
+ *   screenManager.showLevelComplete(gameState.level);
+ * }
+ * ```
  */
 export class GameState {
   score = 0;
@@ -72,11 +103,13 @@ export class GameState {
 
   /**
    * Marks the level complete and pauses gameplay, then automatically
-   * advances to the next level after `transitionMs`, invoking `onNextLevel`
-   * once the next level is ready to play. Safe to call only once per level;
-   * subsequent calls while a transition is pending are ignored.
+   * advances to the next level after `options.transitionMs`, invoking
+   * `options.onNextLevel` once the next level is ready to play. Safe to
+   * call only once per level; subsequent calls while a transition is
+   * pending are ignored.
    */
-  completeLevel(onNextLevel?: () => void, transitionMs: number = LEVEL_COMPLETE_TRANSITION_MS): void {
+  completeLevel(options: LevelTransitionOptions = {}): void {
+    const { onNextLevel, transitionMs = LEVEL_COMPLETE_TRANSITION_MS } = options;
     if (this.levelComplete) {
       return;
     }
@@ -95,17 +128,25 @@ export class GameState {
    * reaches zero, triggers the level-complete transition. Returns true if
    * the level was just completed by this call.
    */
-  checkLevelComplete(remainingDots: number, onNextLevel?: () => void): boolean {
+  checkLevelComplete(remainingDots: number, options?: LevelTransitionOptions): boolean {
     if (remainingDots <= 0 && !this.levelComplete) {
-      this.completeLevel(onNextLevel);
+      this.completeLevel(options);
       return true;
     }
     return false;
   }
 
-  /** Cancels any pending level-transition timer, e.g. on reset/teardown. */
+  /**
+   * Cancels any pending level-transition timer and restores `levelComplete`
+   * and `paused` to their default (non-transitioning) values, e.g. on
+   * reset/teardown. Without this, a `dispose()` called mid-transition would
+   * leave the instance stuck with `levelComplete === true` (making a future
+   * `completeLevel()` call a silent no-op) and `paused === true`.
+   */
   dispose(): void {
     this.clearLevelTransitionTimer();
+    this.levelComplete = false;
+    this.paused = false;
   }
 
   private advanceToNextLevel(): void {
