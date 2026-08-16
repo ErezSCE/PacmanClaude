@@ -37,8 +37,13 @@ npm-debug.log*
 # Test & coverage
 coverage/
 .nyc_output/
+.angular/
+.turbo/
+.parcel-cache/
+bin/
+*.exe
+*.test
 .conventions/
 .worktrees/
-.worktrees-failed/
 .agent/
 # ─── /AgenticDevTeam ───
