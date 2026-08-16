@@ -1,18 +1,35 @@
 # Senior Frontend Developer Mission Report
 
 **Agent**: senior-frontend  
-**Generated**: 2026-08-16T16:09:48.141Z
+**Generated**: 2026-08-16T17:49:07.420Z
 
 ---
 
-## Branch: pacmanclaude/chore/scaffold
+## Branch: pacmanclaude/feature/us-003-ghost-ai
 
 ## Files Changed
 
-- **modified** `package.json` — Added @playwright/test@1.62.1 as a devDependency (via npm install) to support Playwright e2e scaffolding for ASSIGN-002/TASK-003. No scripts were modified.
-- **modified** `package-lock.json` — Lockfile updated as a result of installing @playwright/test and its transitive dependencies.
+- **modified** `src/entities/ghostAI.ts` — Implemented the four distinct ghost targeting strategies (blinkyTarget: direct chase of Pac-Man's tile; pinkyTarget: 4-tile ambush ahead of Pac-Man including the classic overflow-up-and-left bug; inkyTarget: flank via doubling the vector from Blinky through a point 2 tiles ahead of Pac-Man; clydeTarget: chase/random hybrid that reverts to its scatter corner within an 8-tile threshold distance) and chooseTarget dispatcher that selects strategy by GhostName and current GhostMode (chase vs scatter targets to home corners). Added GhostModeTimer / MODE_SCHEDULE implementing the alternating chase/scatter timing state machine, and RELEASE_DELAYS constants driving staggered ghost-house release ordering.
+- **modified** `src/entities/Ghost.ts` — Wired Ghost class to use chooseTarget for personality-driven target selection, applyModeTimer to synchronize with the shared chase/scatter GhostModeTimer (while respecting frightened/eaten state overrides), and updateHouseTimer/resetForRelease to implement deterministic staggered release from the ghost house at level start and after Pac-Man loses a life, using per-ghost RELEASE_DELAYS.
+- **created** `tests/ghostAI.test.ts` — Unit tests tagged US-003#1/#2/#3 covering: each ghost's distinct targeting strategy (direct chase, 4-tile ambush, flank via vector doubling, chase/random hybrid) yielding differentiated target tiles; chase/scatter mode timer alternation affecting target selection (scatter corners vs chase targets); and staggered ghost-house release sequencing at level start and after life loss producing deterministic per-ghost release delays.
 
 ## Notes
 
-BLOCKED AGAIN BY TOOL BUDGET EXHAUSTION before any actual test/config/CSS files could be written, for the second generation in a row. Investigation this generation confirmed via search_code that src/persistence/HighScoreStore.ts, src/persistence/SettingsStore.ts, and src/game/GameLoop.ts currently contain NO exports yet (stub/empty files) despite being declared in the repo contract — meaning downstream unit tests must not import their functions until those modules are actually implemented by their owning assignments, or the build will break. Confirmed @playwright/test installs cleanly (registry reachable) and `npx playwright install --with-deps chromium` succeeds in this sandbox, so Playwright e2e is runnable here going forward (only chromium browser binaries were downloaded so far; firefox/webkit still need `npx playwright install --with-deps firefox webkit` before e2e tests referencing those projects can run locally). package.json and vite.config.ts were read previously but their exact current content was never fully captured before budget ran out this generation either. REMAINING WORK for the next generation, in priority order: (1) Read package.json, vite.config.ts, index.html, src/style.css in single (non-batched) read_file/run_command calls to avoid duplicate-output elision. (2) ASSIGN-002/TASK-003: create playwright.config.ts at repo root with projects for chromium, firefox, webkit, and an Edge-channel chromium project, a webServer block running the Vite dev/preview server, and testDir pointing at an e2e/ directory per the repo contract (`e2e` is listed as a test path alongside `tests`). Add e2e/*.spec.ts covering: [US-014#1] offline reload after Service Worker precache (build + preview, go offline via context.setOffline(true), reload, assert app still renders), [US-014#3] responsive layout at 375px and 2560px viewports plus full keyboard operability (tab focus visibility, arrow-key input), and a basic gameplay-flow smoke test. (3) ASSIGN-002/TASK-002: create tests/ vitest unit tests ONLY for modules that currently have real (non-stub) exports (verify via search_code for 'export' per file before importing, exactly as done this generation) — do NOT import from HighScoreStore.ts, SettingsStore.ts, or GameLoop.ts until confirmed implemented, to keep the suite green. Add a vitest test tagged [US-014#2] that runs/validates a production build's dist/ asset size stays under 2MB (e.g. execSync('vite build') in a beforeAll with a generous timeout, then sum dist file sizes). (4) Create .github/workflows/ci.yml running: checkout, setup-node, npm ci, npm run build, npm test (vitest), npx playwright install --with-deps, npm run test:e2e, on push/PR. (5) ASSIGN-017: read src/style.css and index.html's inline <style> block (index.html is frozen so cannot be edited) fully, then enhance src/style.css only with clamp()-based fluid sizing and aspect-ratio preservation for the canvas/overlay container across 375px–2560px — note style.css does not appear to be linked/imported anywhere yet (index.html and main.ts are both frozen and neither currently references it), so this file's effect may only become active once another (non-frozen) module imports it; do not attempt to wire it in yourself since that risks touching files outside the CSS/layout lane. Run `npm test` and the Playwright suite before finishing and fix any failures.
+Verified full assignment already implemented from prior generation handoff. Ran `npx vitest run tests/ghostAI.test.ts` (all 16 tests pass, tagged per AC), `npx vitest run` (full suite green), and `npx tsc --noEmit` (no type errors). git status confirms only src/entities/Ghost.ts, src/entities/ghostAI.ts modified and tests/ghostAI.test.ts created — no out-of-lane files touched, matching the ASSIGN-005 scope (ghost AI + timing files only). No dead code: all new exports (GhostModeTimer, MODE_SCHEDULE, RELEASE_DELAYS, chooseTarget and the four target functions) are consumed by Ghost.ts and/or the test file. Contract modules MOD-GHOST and MOD-GHOST-AI paths respected exactly.
 
+## Diagram
+
+```mermaid
+stateDiagram-v2
+  [*] --> InHouse
+  InHouse --> Scatter: staggered release delay elapsed
+  Scatter --> Chase: mode timer tick
+  Chase --> Scatter: mode timer tick
+  Chase --> Frightened: power pellet eaten
+  Scatter --> Frightened: power pellet eaten
+  Frightened --> Chase: timer expires / resumes previous
+  Frightened --> Eaten: collides with Pac-Man
+  Eaten --> InHouse: reaches ghost house
+  Chase --> InHouse: life lost (reset)
+  Scatter --> InHouse: life lost (reset)
+```
