@@ -44,10 +44,11 @@ describe('HighScoreStore', () => {
 
   describe('[US-011#4] saveHighScore enforces 10-entry cap', () => {
     it('should keep only top 10 scores when more are added', () => {
-      // Add 12 scores
+      // Add 12 scores with valid 3-character initials
       for (let i = 0; i < 12; i++) {
+        const initials = String.fromCharCode(65 + i).repeat(3); // AAA, BBB, CCC, etc.
         saveHighScore({
-          initials: String.fromCharCode(65 + i),
+          initials,
           score: 1000 + i * 100,
         });
       }
@@ -68,8 +69,9 @@ describe('HighScoreStore', () => {
     it('should return true when score beats the 10th place', () => {
       // Fill with 10 scores: 1000, 1100, 1200, ..., 1900
       for (let i = 0; i < 10; i++) {
+        const initials = String.fromCharCode(65 + i).repeat(3); // AAA, BBB, CCC, etc.
         saveHighScore({
-          initials: String.fromCharCode(65 + i),
+          initials,
           score: 1000 + i * 100,
         });
       }
@@ -80,8 +82,9 @@ describe('HighScoreStore', () => {
     it('should return false when score does not beat 10th place', () => {
       // Fill with 10 scores: 1000, 1100, 1200, ..., 1900
       for (let i = 0; i < 10; i++) {
+        const initials = String.fromCharCode(65 + i).repeat(3); // AAA, BBB, CCC, etc.
         saveHighScore({
-          initials: String.fromCharCode(65 + i),
+          initials,
           score: 1000 + i * 100,
         });
       }
@@ -154,7 +157,7 @@ describe('HighScoreStore', () => {
       // Fill with 10 scores: 1000, 1100, 1200, ..., 1900
       for (let i = 0; i < 10; i++) {
         saveHighScore({
-          initials: String.fromCharCode(65 + i),
+          initials: String.fromCharCode(65 + i).repeat(3), // "AAA", "BBB", "CCC", etc.
           score: 1000 + i * 100,
         });
       }

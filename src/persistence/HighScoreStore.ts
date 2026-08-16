@@ -40,8 +40,14 @@ export function getHighScores(): HighScoreEntry[] {
 
 /**
  * Saves a new high score entry, keeping only the top 10.
+ * Validates that initials is exactly 3 uppercase alphabetic characters and score is positive.
  */
 export function saveHighScore(entry: HighScoreEntry): void {
+  // Validate input: initials must be exactly 3 characters, alphabetic, and score must be positive
+  if (!entry.initials || entry.initials.length !== 3 || !/^[A-Z]{3}$/.test(entry.initials) || entry.score <= 0) {
+    return;
+  }
+
   const scores = getHighScores();
   scores.push(entry);
   scores.sort((a, b) => b.score - a.score);

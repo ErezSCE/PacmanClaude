@@ -1,4 +1,4 @@
-import { beforeEach, afterEach, vi } from 'vitest';
+import { beforeEach, vi } from 'vitest';
 
 /**
  * Global test setup: provide a working localStorage mock for jsdom environment.
@@ -37,9 +37,5 @@ Object.defineProperty(window, 'localStorage', {
 });
 
 beforeEach(() => {
-  localStorage.clear();
-});
-
-afterEach(() => {
   localStorage.clear();
 });

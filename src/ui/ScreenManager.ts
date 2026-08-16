@@ -78,7 +78,7 @@ export class ScreenManager {
         initials: this.initialsInput,
         score: this.gameOverScore,
       });
-      this.hide();
+      // Transition back to start screen
       this.show('start');
     }
   }
