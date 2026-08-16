@@ -1,26 +1,26 @@
 # QA Lead — Test Plan
 
 **Agent**: qa-lead  
-**Generated**: 2026-08-16T16:56:28.987Z
+**Generated**: 2026-08-16T21:00:47.731Z
 
 ---
 
 ## Test Plan
 
 {
-  "scope": "Comprehensive QA plan for the client-only Pac-Man SPA/PWA using existing stack: Vitest for unit/integration-style browser-module tests and Playwright for E2E cross-browser flows. Mandatory traceability rule for all test implementations: every test name must start with [<storyId>#<acIndex>] (example: [US-005#0] eating dot awards 10 points). Place tests in repo-declared test directories (if provided by repo contract); otherwise use conventional structure: tests/unit, tests/integration, tests/e2e. This plan maps every acceptance criterion to at least one test item. No uncovered acceptance criteria.",
+  "scope": "Comprehensive QA plan for the Pac-Man SPA/PWA using Vitest (unit/integration) and Playwright (E2E). Mandatory traceability rule: every test name must begin with [<storyId>#<acIndex>] (example: [US-005#0] dot collision adds 10 points). Place unit/integration specs under the repo test directories for Vitest (e.g., src/**/__tests__ or tests/unit, tests/integration per repo contract) and E2E specs under Playwright testDir (e.g., tests/e2e). This plan assumes no backend APIs; integration focuses on module wiring, event bus interactions, localStorage persistence, service worker/cache behavior, and browser runtime integration. No acceptance criteria are intentionally uncovered.",
   "unit": [
     {
       "target": "Maze Model & Renderer",
-      "description": "[US-001#0] Validate tile map contains distinct wall/corridor types, ghost house coordinates, and at least one horizontal tunnel pair linking left/right exits.",
+      "description": "[US-001#0] Validate tile map contains distinct wall/corridor types, ghost house coordinates, and at least one valid left-right tunnel linkage in model metadata.",
       "framework": "Vitest",
       "storyId": "US-001",
       "acIndex": 0,
       "moduleId": "maze-model"
     },
     {
-      "target": "Maze Renderer (Canvas draw commands)",
-      "description": "[US-001#1] Verify regular dots and exactly four power pellets are drawn at configured coordinates and removed from render list after consume events.",
+      "target": "Maze Renderer (Canvas draw calls)",
+      "description": "[US-001#1] Verify regular dots and exactly four power pellets are rendered at configured coordinates and removed from render list after consume events.",
       "framework": "Vitest",
       "storyId": "US-001",
       "acIndex": 1,
@@ -35,8 +35,8 @@
       "moduleId": "maze-model"
     },
     {
-      "target": "Input Manager normalization",
-      "description": "[US-002#0] Arrow keys, WASD, swipe directions, and on-screen button presses all map to the same DirectionIntent enum/API.",
+      "target": "Input Manager",
+      "description": "[US-002#0] Arrow/WASD/swipe/on-screen button inputs normalize to identical directional intent enum and dispatch through one API.",
       "framework": "Vitest",
       "storyId": "US-002",
       "acIndex": 0,
@@ -44,7 +44,7 @@
     },
     {
       "target": "Pac-Man Controller movement",
-      "description": "[US-002#1] Pac-Man continues in last valid direction until wall collision; queued turn applies at next legal tile; tunnel wrap teleports to opposite side preserving direction.",
+      "description": "[US-002#1] Pac-Man continues in last valid direction until wall collision and wraps correctly through tunnel exits.",
       "framework": "Vitest",
       "storyId": "US-002",
       "acIndex": 1,
@@ -52,7 +52,7 @@
     },
     {
       "target": "Pac-Man animation state",
-      "description": "[US-002#2] Facing sprite orientation follows movement vector and chomp animation advances only while moving.",
+      "description": "[US-002#2] Facing direction updates with movement vector and chomp animation toggles only while moving.",
       "framework": "Vitest",
       "storyId": "US-002",
       "acIndex": 2,
@@ -60,19 +60,19 @@
     },
     {
       "target": "Ghost AI targeting strategies",
-      "description": "[US-003#0] Unit-test each ghost target function: direct chase, ambush ahead tiles, flank/cutoff vector logic, and chase/random hybrid branch behavior.",
+      "description": "[US-003#0] Unit-test each ghost targeting function: direct chase, ambush ahead, flank/cutoff, chase-random hybrid outputs expected target tiles.",
       "framework": "Vitest",
       "storyId": "US-003",
       "acIndex": 0,
-      "moduleId": "ghost-ai"
+      "moduleId": "ghost-ai-controller"
     },
     {
       "target": "Ghost mode scheduler",
-      "description": "[US-003#1] Chase/scatter timer alternates modes per configured schedule and target-selection function switches by current mode.",
+      "description": "[US-003#1] Chase/scatter timer transitions modes at configured intervals and target selector switches behavior by mode.",
       "framework": "Vitest",
       "storyId": "US-003",
       "acIndex": 1,
-      "moduleId": "ghost-ai"
+      "moduleId": "ghost-ai-controller"
     },
     {
       "target": "Ghost release controller",
@@ -80,31 +80,31 @@
       "framework": "Vitest",
       "storyId": "US-003",
       "acIndex": 2,
-      "moduleId": "ghost-ai"
+      "moduleId": "ghost-ai-controller"
     },
     {
-      "target": "Frightened mode state transition",
-      "description": "[US-004#0] Power pellet event sets all ghosts frightened, reverses direction, and applies speed multiplier reduction.",
+      "target": "Frightened mode state machine",
+      "description": "[US-004#0] Power pellet event sets all ghosts frightened, reverses direction once, and applies speed reduction multiplier.",
       "framework": "Vitest",
       "storyId": "US-004",
       "acIndex": 0,
-      "moduleId": "ghost-ai"
+      "moduleId": "ghost-ai-controller"
     },
     {
-      "target": "Frightened warning flasher",
-      "description": "[US-004#1] Final two seconds of frightened timer toggles flash/blink state at configured cadence.",
+      "target": "Frightened warning timer",
+      "description": "[US-004#1] Final two seconds of frightened mode toggles flash/blink flag at configured cadence.",
       "framework": "Vitest",
       "storyId": "US-004",
       "acIndex": 1,
-      "moduleId": "ghost-ai"
+      "moduleId": "ghost-ai-controller"
     },
     {
-      "target": "Ghost eaten/eyes lifecycle",
-      "description": "[US-004#2] Frightened ghost collision transitions to eyes state, path target becomes ghost house, and normal state restored on arrival.",
+      "target": "Ghost eaten/eyes return flow",
+      "description": "[US-004#2] Frightened ghost collision transitions to eyes state, pathfinds to house, then respawns normal on arrival.",
       "framework": "Vitest",
       "storyId": "US-004",
       "acIndex": 2,
-      "moduleId": "ghost-ai"
+      "moduleId": "ghost-ai-controller"
     },
     {
       "target": "Collision scoring rules",
@@ -115,8 +115,8 @@
       "moduleId": "collision-system"
     },
     {
-      "target": "Frightened combo scorer",
-      "description": "[US-005#1] Sequential frightened ghost eats within one pellet window award 200/400/800/1600 then reset on window end.",
+      "target": "Frightened ghost combo scoring",
+      "description": "[US-005#1] Consecutive frightened ghost eats within one pellet window score 200/400/800/1600 and reset after window ends.",
       "framework": "Vitest",
       "storyId": "US-005",
       "acIndex": 1,
@@ -124,75 +124,75 @@
     },
     {
       "target": "Death/life-loss reset logic",
-      "description": "[US-005#2] Normal ghost collision decrements life, triggers death sequence event, and resets actors without restoring consumed dots.",
+      "description": "[US-005#2] Normal ghost collision decrements life, triggers death sequence, and resets actors without resetting consumed dots.",
       "framework": "Vitest",
       "storyId": "US-005",
       "acIndex": 2,
       "moduleId": "game-state"
     },
     {
-      "target": "Score HUD model binding",
-      "description": "[US-006#0] Score observable updates immediately after scoring events and remains available during active gameplay state.",
+      "target": "HUD score/lives presenter",
+      "description": "[US-006#0] Score UI model updates immediately on score events and visibility flag remains true during gameplay state.",
       "framework": "Vitest",
       "storyId": "US-006",
       "acIndex": 0,
       "moduleId": "score-manager"
     },
     {
-      "target": "Extra life threshold guard",
-      "description": "[US-006#1] Crossing 10,000 points grants exactly one extra life once per game and emits extra-life audio event.",
+      "target": "Extra life threshold rule",
+      "description": "[US-006#1] First crossing of 10,000 grants exactly one life and emits distinct extra-life audio event once only.",
       "framework": "Vitest",
       "storyId": "US-006",
       "acIndex": 1,
       "moduleId": "score-manager"
     },
     {
-      "target": "Lives initialization/decrement",
-      "description": "[US-006#2] New game starts with 3 lives and decrements by one per death until zero/game-over flag.",
+      "target": "Initial lives/game-over threshold",
+      "description": "[US-006#2] New game starts with 3 lives and decrements to game-over at zero with no underflow.",
       "framework": "Vitest",
       "storyId": "US-006",
       "acIndex": 2,
       "moduleId": "score-manager"
     },
     {
-      "target": "Fruit spawn trigger counters",
-      "description": "[US-007#0] Fruit spawn events fire near center at ~70 and ~170 dots eaten once each per level.",
+      "target": "Bonus Fruit spawn scheduler",
+      "description": "[US-007#0] Fruit spawn triggers near center at ~70 and ~170 dots eaten once each per level.",
       "framework": "Vitest",
       "storyId": "US-007",
       "acIndex": 0,
-      "moduleId": "fruit-system"
+      "moduleId": "bonus-fruit-system"
     },
     {
-      "target": "Fruit table resolver",
-      "description": "[US-007#1] Fruit type and point value resolve by level according to configured progression table.",
+      "target": "Fruit table mapping",
+      "description": "[US-007#1] Fruit type and point value resolve by level according to configured table.",
       "framework": "Vitest",
       "storyId": "US-007",
       "acIndex": 1,
-      "moduleId": "fruit-system"
+      "moduleId": "bonus-fruit-system"
     },
     {
-      "target": "Fruit lifetime timeout",
+      "target": "Fruit timeout behavior",
       "description": "[US-007#2] Uncollected fruit despawns after lifetime and subsequent collision checks do not award points.",
       "framework": "Vitest",
       "storyId": "US-007",
       "acIndex": 2,
-      "moduleId": "fruit-system"
+      "moduleId": "bonus-fruit-system"
     },
     {
-      "target": "Level completion detector",
-      "description": "[US-008#0] Last consumable triggers level-complete state and schedules next-level transition event.",
+      "target": "Level progression trigger",
+      "description": "[US-008#0] Last consumable event marks level complete and emits transition-to-next-level event.",
       "framework": "Vitest",
       "storyId": "US-008",
       "acIndex": 0,
-      "moduleId": "game-state"
+      "moduleId": "level-manager"
     },
     {
       "target": "Difficulty curve calculator",
-      "description": "[US-008#1] Per-level parameters increase challenge: ghost speed up, frightened duration down, scatter duration down.",
+      "description": "[US-008#1] Per-level parameters increase ghost speed and reduce frightened/scatter durations per curve config.",
       "framework": "Vitest",
       "storyId": "US-008",
       "acIndex": 1,
-      "moduleId": "difficulty-config"
+      "moduleId": "level-manager"
     },
     {
       "target": "Difficulty cap repeater",
@@ -200,11 +200,11 @@
       "framework": "Vitest",
       "storyId": "US-008",
       "acIndex": 2,
-      "moduleId": "difficulty-config"
+      "moduleId": "level-manager"
     },
     {
-      "target": "Audio event map",
-      "description": "[US-009#0] Startup/dot/pellet/ghost/death/fruit/extra-life events map to distinct audio buffers/IDs.",
+      "target": "Audio event routing",
+      "description": "[US-009#0] Startup/dot/pellet/ghost/death/fruit/extra-life events map to distinct sound IDs.",
       "framework": "Vitest",
       "storyId": "US-009",
       "acIndex": 0,
@@ -219,8 +219,8 @@
       "moduleId": "audio-manager"
     },
     {
-      "target": "Mute persistence store",
-      "description": "[US-009#2] Global mute toggles immediate master gain to silent and persists/reloads from settings storage.",
+      "target": "Mute setting persistence",
+      "description": "[US-009#2] Global mute immediately suppresses active/new sounds and persists/reloads from settings store.",
       "framework": "Vitest",
       "storyId": "US-009",
       "acIndex": 2,
@@ -228,31 +228,31 @@
     },
     {
       "target": "Screen state machine",
-      "description": "[US-010#0] Overlay states (Start/Countdown/Pause/LevelComplete/GameOver) expose accessible metadata and focusable controls where required.",
+      "description": "[US-010#0] Start/Countdown/Pause/LevelComplete/GameOver overlay states expose accessible labels and focusable controls metadata.",
       "framework": "Vitest",
       "storyId": "US-010",
       "acIndex": 0,
       "moduleId": "screen-manager"
     },
     {
-      "target": "Countdown/pause timing control",
-      "description": "[US-010#1] Start triggers 3-2-1-GO sequence before run state; pause halts simulation ticks until resume.",
+      "target": "Countdown/pause logic",
+      "description": "[US-010#1] Start triggers 3-2-1-GO sequence timing; pause halts simulation ticks until resume.",
       "framework": "Vitest",
       "storyId": "US-010",
       "acIndex": 1,
-      "moduleId": "game-loop"
+      "moduleId": "screen-manager"
     },
     {
       "target": "Game over/level complete transitions",
-      "description": "[US-010#2] Game over payload includes final score and restart action; level-complete state auto-advances after brief delay.",
+      "description": "[US-010#2] Game over payload includes final score and restart action; level complete auto-advances after brief delay.",
       "framework": "Vitest",
       "storyId": "US-010",
       "acIndex": 2,
       "moduleId": "screen-manager"
     },
     {
-      "target": "High score repository",
-      "description": "[US-011#0] localStorage adapter saves/loads top-10 list across reload simulation with schema validation.",
+      "target": "High score store CRUD",
+      "description": "[US-011#0] localStorage read/write roundtrip persists top-10 list across reload simulation.",
       "framework": "Vitest",
       "storyId": "US-011",
       "acIndex": 0,
@@ -260,14 +260,14 @@
     },
     {
       "target": "Initials validation",
-      "description": "[US-011#1] Qualifying score flow accepts exactly 3-letter initials and persists entry on confirm.",
+      "description": "[US-011#1] Qualifying score prompts 3-letter initials; accepts valid input and saves on confirm.",
       "framework": "Vitest",
       "storyId": "US-011",
       "acIndex": 1,
       "moduleId": "high-score-store"
     },
     {
-      "target": "Top-10 sorter/trimmer",
+      "target": "Top-10 sorting/truncation",
       "description": "[US-011#2] Entries sorted descending by score and truncated to 10 records.",
       "framework": "Vitest",
       "storyId": "US-011",
@@ -276,367 +276,319 @@
     },
     {
       "target": "Keyboard navigation map",
-      "description": "[US-012#0] All menu actions expose keyboard handlers (Tab/Shift+Tab/Enter/Space/Escape as applicable).",
+      "description": "[US-012#0] All interactive controls are reachable/activatable via tab/enter/space key handling map.",
       "framework": "Vitest",
       "storyId": "US-012",
       "acIndex": 0,
       "moduleId": "screen-manager"
     },
     {
-      "target": "Focus style contract",
-      "description": "[US-012#1] Interactive controls include focus-visible class/state token on all required screens.",
+      "target": "Focus style state",
+      "description": "[US-012#1] Focus-visible class/state applied for controls on Start/Pause/GameOver/Settings overlays.",
       "framework": "Vitest",
       "storyId": "US-012",
       "acIndex": 1,
-      "moduleId": "ui-components"
+      "moduleId": "ui-accessibility"
     },
     {
-      "target": "Gameplay hotkeys",
-      "description": "[US-012#2] Pause and mute key bindings dispatch during active gameplay without pointer events.",
+      "target": "Gameplay keyboard bindings",
+      "description": "[US-012#2] Pause and mute keybindings dispatch during active gameplay without pointer events.",
       "framework": "Vitest",
       "storyId": "US-012",
       "acIndex": 2,
       "moduleId": "input-manager"
     },
     {
-      "target": "Palette toggle reducer",
-      "description": "[US-013#0] Settings action toggles default vs colorblind ghost palette flag.",
+      "target": "Palette toggle setting",
+      "description": "[US-013#0] Settings toggle flips default vs colorblind palette flag.",
       "framework": "Vitest",
       "storyId": "US-013",
       "acIndex": 0,
       "moduleId": "settings-store"
     },
     {
-      "target": "Ghost render palette binding",
-      "description": "[US-013#1] Ghost renderer applies selected palette immediately and rehydrates same palette on app init.",
+      "target": "Ghost palette resolver",
+      "description": "[US-013#1] Ghost renderer applies selected palette immediately and on boot from persisted setting.",
       "framework": "Vitest",
       "storyId": "US-013",
       "acIndex": 1,
       "moduleId": "ghost-renderer"
     },
     {
-      "target": "Settings storage isolation",
-      "description": "[US-013#2] Persisting settings does not overwrite or corrupt high score keys/data.",
+      "target": "Settings isolation",
+      "description": "[US-013#2] Persisting settings does not mutate/remove high score keys in localStorage.",
       "framework": "Vitest",
       "storyId": "US-013",
       "acIndex": 2,
       "moduleId": "settings-store"
     },
     {
-      "target": "App bootstrap wiring",
-      "description": "[US-015#0] Root entry initializes screen/input/audio/score/game-loop modules and registers event bus subscriptions.",
+      "target": "PWA manifest/cache config validator",
+      "description": "[US-014#0] Workbox/vite-plugin-pwa config includes app shell and required static assets in precache manifest.",
+      "framework": "Vitest",
+      "storyId": "US-014",
+      "acIndex": 0,
+      "moduleId": "offline-cache"
+    },
+    {
+      "target": "Build budget checker",
+      "description": "[US-014#1] Build artifact size assertion enforces total shipped assets under 2MB and no backend endpoint dependency flags.",
+      "framework": "Vitest",
+      "storyId": "US-014",
+      "acIndex": 1,
+      "moduleId": "build-quality"
+    },
+    {
+      "target": "Bootstrap wiring contract",
+      "description": "[US-015#0] Main entry initializes screen/input/audio/score/game-loop modules in required order and subscribes event channels.",
       "framework": "Vitest",
       "storyId": "US-015",
       "acIndex": 0,
-      "moduleId": "app-shell"
-    },
-    {
-      "target": "Boot-to-play session orchestrator",
-      "description": "[US-015#1] Root start action transitions Start->Countdown->Gameplay with no manual hooks.",
-      "framework": "Vitest",
-      "storyId": "US-015",
-      "acIndex": 1,
-      "moduleId": "app-shell"
-    },
-    {
-      "target": "Client-only launch contract",
-      "description": "[US-015#2] Build-time config and runtime guards ensure SPA remains client-only and supports pause/level/game-over restart transitions.",
-      "framework": "Vitest",
-      "storyId": "US-015",
-      "acIndex": 2,
       "moduleId": "app-shell"
     }
   ],
   "integration": [
     {
-      "target": "Collision System + Score Manager + Maze Model",
-      "description": "[US-001#1] Consuming dot/pellet updates maze consumables, removes render entity, and emits score event in one frame transaction.",
+      "target": "Game loop + maze + collision + score pipeline",
+      "description": "[US-001#1] Consuming dot/pellet in simulation frame removes render entity and updates remaining count and score event chain.",
       "framework": "Vitest",
       "storyId": "US-001",
       "acIndex": 1,
-      "moduleId": "collision-score-integration"
+      "moduleId": "engine-integration"
     },
     {
-      "target": "Maze completion -> Level state",
-      "description": "[US-001#2] When remaining consumables hits zero, level-complete event propagates to screen/game-state managers.",
-      "framework": "Vitest",
-      "storyId": "US-001",
-      "acIndex": 2,
-      "moduleId": "level-flow"
-    },
-    {
-      "target": "Input Manager + Pac-Man Controller",
-      "description": "[US-002#0] Keyboard/swipe/button inputs produce identical movement outcomes through shared direction API.",
+      "target": "Input manager + pacman controller + maze collision",
+      "description": "[US-002#1] Direction intent from normalized input drives continuous movement until wall block and tunnel wrap in live tick loop.",
       "framework": "Vitest",
       "storyId": "US-002",
-      "acIndex": 0,
-      "moduleId": "input-pacman-integration"
+      "acIndex": 1,
+      "moduleId": "movement-integration"
     },
     {
-      "target": "Ghost AI + Mode Scheduler",
-      "description": "[US-003#1] Mode timer transitions alter active target provider and resulting path target coordinates.",
+      "target": "Ghost AI + mode timer + release manager",
+      "description": "[US-003#1] Integrated ghost update cycle switches chase/scatter targets and respects staggered release gates.",
       "framework": "Vitest",
       "storyId": "US-003",
       "acIndex": 1,
-      "moduleId": "ghost-mode-integration"
+      "moduleId": "ghost-integration"
     },
     {
-      "target": "Power pellet pipeline",
-      "description": "[US-004#0] Pellet collision event fans out to all ghosts for frightened state, reversal, and speed update.",
+      "target": "Power pellet event bus integration",
+      "description": "[US-004#0] Pellet collision broadcasts frightened event to all ghosts, applies reversal/speed change, and starts frightened timer.",
       "framework": "Vitest",
       "storyId": "US-004",
       "acIndex": 0,
-      "moduleId": "pellet-ghost-integration"
+      "moduleId": "frightened-integration"
     },
     {
-      "target": "Ghost eaten pipeline",
-      "description": "[US-004#2] Frightened ghost collision updates score combo, ghost eyes state, and house-return/respawn sequence.",
-      "framework": "Vitest",
-      "storyId": "US-004",
-      "acIndex": 2,
-      "moduleId": "ghost-respawn-integration"
-    },
-    {
-      "target": "Death reset pipeline",
-      "description": "[US-005#2] Normal ghost collision triggers life decrement, death animation state, actor reset, and preserved maze consumables.",
+      "target": "Collision + score manager + life reset",
+      "description": "[US-005#2] Normal ghost collision decrements lives, runs death sequence, and restores actor positions while preserving maze consumables.",
       "framework": "Vitest",
       "storyId": "US-005",
       "acIndex": 2,
-      "moduleId": "death-flow"
+      "moduleId": "death-reset-integration"
     },
     {
-      "target": "Score->HUD->Audio extra life",
-      "description": "[US-006#1] Threshold crossing updates lives, HUD, and plays extra-life cue exactly once.",
+      "target": "Score manager + HUD + audio manager",
+      "description": "[US-006#1] Crossing 10,000 updates lives UI and triggers extra-life sound exactly once in integrated event flow.",
       "framework": "Vitest",
       "storyId": "US-006",
       "acIndex": 1,
-      "moduleId": "score-hud-audio"
+      "moduleId": "score-audio-ui-integration"
     },
     {
-      "target": "Fruit lifecycle integration",
-      "description": "[US-007#0] Dot counter milestones spawn fruit entity near center and register collision scoring hook.",
+      "target": "Dot counter + fruit system + collision",
+      "description": "[US-007#0] Fruit spawns at two thresholds and can be collected for level-specific points through collision pipeline.",
       "framework": "Vitest",
       "storyId": "US-007",
       "acIndex": 0,
-      "moduleId": "fruit-flow"
+      "moduleId": "fruit-integration"
     },
     {
-      "target": "Difficulty application integration",
-      "description": "[US-008#1] On level increment, difficulty config propagates to ghost speed, frightened timer, and scatter scheduler.",
+      "target": "Level complete + transition + difficulty apply",
+      "description": "[US-008#0] Clearing last consumable triggers level-complete overlay then next-level init with updated difficulty params.",
       "framework": "Vitest",
       "storyId": "US-008",
-      "acIndex": 1,
-      "moduleId": "difficulty-application"
+      "acIndex": 0,
+      "moduleId": "level-flow-integration"
     },
     {
-      "target": "Audio mute + settings persistence",
-      "description": "[US-009#2] Mute toggle updates audio graph immediately and persists/reloads via settings store on app restart.",
+      "target": "Audio manager + settings store",
+      "description": "[US-009#2] Mute toggle updates runtime audio graph and persists to localStorage, restored on app re-init.",
       "framework": "Vitest",
       "storyId": "US-009",
       "acIndex": 2,
       "moduleId": "audio-settings-integration"
     },
     {
-      "target": "Screen Manager + Game Loop",
-      "description": "[US-010#1] Pause overlay activation freezes update ticks and resume restores deterministic progression.",
+      "target": "Screen manager + game loop pause control",
+      "description": "[US-010#1] Pause overlay activation halts engine updates and resume continues from same state.",
       "framework": "Vitest",
       "storyId": "US-010",
       "acIndex": 1,
       "moduleId": "screen-loop-integration"
     },
     {
-      "target": "Game over initials + high score store",
-      "description": "[US-011#1] Qualifying game-over flow opens initials entry, validates 3 chars, saves, and refreshes leaderboard view.",
+      "target": "Game over + high score qualification flow",
+      "description": "[US-011#1] Final score qualification opens initials entry, saves to store, and refreshes sorted top-10 list.",
       "framework": "Vitest",
       "storyId": "US-011",
       "acIndex": 1,
-      "moduleId": "gameover-highscore-integration"
+      "moduleId": "highscore-flow-integration"
     },
     {
-      "target": "Settings + Ghost Renderer + Storage",
-      "description": "[US-013#1] Palette toggle in settings updates live ghost colors and persists across simulated reload.",
+      "target": "Keyboard controls across overlays + gameplay",
+      "description": "[US-012#2] Keyboard-only pause/mute and menu activation work without mouse across state transitions.",
+      "framework": "Vitest",
+      "storyId": "US-012",
+      "acIndex": 2,
+      "moduleId": "a11y-input-integration"
+    },
+    {
+      "target": "Settings store + ghost renderer + boot sequence",
+      "description": "[US-013#1] Palette toggle applies immediately and remains after reload through persisted settings hydration.",
       "framework": "Vitest",
       "storyId": "US-013",
       "acIndex": 1,
-      "moduleId": "palette-settings-integration"
+      "moduleId": "palette-integration"
     },
     {
-      "target": "Service Worker precache manifest",
-      "description": "[US-014#0] Build output includes SW and precache entries for app shell, sprites, audio, and core bundles.",
+      "target": "Service worker registration + cache + app boot",
+      "description": "[US-014#0] After first online load, cached shell/assets allow successful offline boot path in integration harness.",
       "framework": "Vitest",
       "storyId": "US-014",
       "acIndex": 0,
-      "moduleId": "pwa-build"
+      "moduleId": "pwa-integration"
     },
     {
-      "target": "Asset budget gate",
-      "description": "[US-014#1] CI integration test computes total shipped static assets and fails if >2MB threshold.",
-      "framework": "Vitest",
-      "storyId": "US-014",
-      "acIndex": 1,
-      "moduleId": "build-budget"
-    },
-    {
-      "target": "Root composition integration",
-      "description": "[US-015#0] App entry composes managers/services and reaches ready state without missing dependency wiring.",
+      "target": "App entrypoint full wiring smoke",
+      "description": "[US-015#2] Single-page build bootstraps to interactive state with start->countdown->gameplay->pause->gameover->restart transitions.",
       "framework": "Vitest",
       "storyId": "US-015",
-      "acIndex": 0,
-      "moduleId": "bootstrap-integration"
+      "acIndex": 2,
+      "moduleId": "app-shell-integration"
     }
   ],
   "e2e": [
     {
-      "scenario": "Maze renders with walls/corridors/ghost house/tunnel on first playable frame",
-      "description": "[US-001#0] Launch app, start game, assert canvas snapshot/semantic markers indicate full maze features including tunnel and ghost house.",
+      "scenario": "Start screen to gameplay render verification",
+      "description": "[US-001#0] Launch app, start game, assert maze walls/corridors/ghost house/tunnel are visibly rendered on canvas and overlay hidden during play.",
       "criticalPath": true,
       "storyId": "US-001",
       "acIndex": 0,
-      "moduleId": "maze-ui"
+      "moduleId": "ui-canvas"
     },
     {
-      "scenario": "Dots/pellets visible then removed when eaten",
-      "description": "[US-001#1] Navigate Pac-Man to dot and pellet, verify visual removal and count reduction in HUD/debug overlay.",
-      "criticalPath": true,
-      "storyId": "US-001",
-      "acIndex": 1,
-      "moduleId": "maze-ui"
-    },
-    {
-      "scenario": "Keyboard, swipe, and on-screen controls all move Pac-Man",
-      "description": "[US-002#0] In desktop/mobile emulation, send arrow/WASD, swipe, and button taps; assert equivalent direction changes.",
+      "scenario": "Cross-input control journey",
+      "description": "[US-002#0] Validate keyboard arrows/WASD, touch swipe (mobile emulation), and on-screen buttons all move Pac-Man via same behavior.",
       "criticalPath": true,
       "storyId": "US-002",
       "acIndex": 0,
-      "moduleId": "controls"
+      "moduleId": "input-e2e"
     },
     {
-      "scenario": "Continuous movement and tunnel wrap behavior",
-      "description": "[US-002#1] Set direction once, verify continuous travel until wall and successful left-right tunnel wrap.",
+      "scenario": "Ghost behavior authenticity run",
+      "description": "[US-003#0] During timed play, observe distinct ghost pursuit patterns and chase/scatter alternation with staggered release from house.",
       "criticalPath": true,
-      "storyId": "US-002",
-      "acIndex": 1,
-      "moduleId": "controls"
-    },
-    {
-      "scenario": "Distinct ghost behaviors observable in chase/scatter windows",
-      "description": "[US-003#0] During controlled run, capture ghost target tendencies and confirm mode shifts alter pursuit patterns.",
-      "criticalPath": false,
       "storyId": "US-003",
       "acIndex": 0,
-      "moduleId": "ghosts"
+      "moduleId": "ghost-e2e"
     },
     {
-      "scenario": "Power pellet triggers frightened mode with reversal and slowdown",
-      "description": "[US-004#0] Eat pellet, assert all ghosts reverse, turn frightened visuals, and move slower.",
+      "scenario": "Power pellet frightened cycle",
+      "description": "[US-004#0] Eat pellet, verify all ghosts reverse/slow, flash near end, and eaten ghost returns as eyes then respawns normal.",
       "criticalPath": true,
       "storyId": "US-004",
       "acIndex": 0,
-      "moduleId": "ghosts"
+      "moduleId": "frightened-e2e"
     },
     {
-      "scenario": "Frightened ghost eaten returns as eyes then respawns",
-      "description": "[US-004#2] Eat frightened ghost, verify eyes travel to house and ghost respawns normal after arrival.",
-      "criticalPath": true,
-      "storyId": "US-004",
-      "acIndex": 2,
-      "moduleId": "ghosts"
-    },
-    {
-      "scenario": "Scoring and life-loss rules in live play",
-      "description": "[US-005#0] Validate dot/pellet/fruit score increments and [US-005#2] normal ghost collision decrements life with reset preserving eaten dots.",
+      "scenario": "Scoring and life-loss rules session",
+      "description": "[US-005#0] In one run verify dot/pellet/fruit points, frightened combo escalation, and normal ghost death life decrement/reset behavior.",
       "criticalPath": true,
       "storyId": "US-005",
-      "acIndex": -1,
-      "moduleId": "scoring-lives"
+      "acIndex": 0,
+      "moduleId": "score-collision-e2e"
     },
     {
-      "scenario": "Extra life at 10,000 with HUD/audio feedback",
-      "description": "[US-006#1] Reach threshold via scripted play, assert +1 life exactly once and extra-life sound event.",
+      "scenario": "HUD and extra-life milestone",
+      "description": "[US-006#1] Reach 10,000 points, assert exactly one extra life granted, cue played, and score/lives always visible.",
       "criticalPath": true,
       "storyId": "US-006",
       "acIndex": 1,
-      "moduleId": "hud-audio"
+      "moduleId": "hud-e2e"
     },
     {
-      "scenario": "Fruit spawns twice and expires if ignored",
-      "description": "[US-007#0] Trigger ~70 and ~170 dot milestones for spawn; [US-007#2] wait out timer and confirm despawn/non-collectable.",
+      "scenario": "Fruit spawn/despawn timing",
+      "description": "[US-007#0] Consume dots to thresholds ~70/~170, verify center fruit appears twice per level and disappears after timeout if ignored.",
       "criticalPath": false,
       "storyId": "US-007",
-      "acIndex": -1,
-      "moduleId": "fruit"
+      "acIndex": 0,
+      "moduleId": "fruit-e2e"
     },
     {
-      "scenario": "Level completion and progression difficulty",
-      "description": "[US-008#0] Clear board to transition screen then next level; [US-008#1] verify increased challenge parameters reflected in gameplay pace.",
+      "scenario": "Level progression and difficulty scaling",
+      "description": "[US-008#0] Clear board, confirm level-complete overlay then next level with harder ghost/frightened/scatter settings; verify cap behavior after level 20 via seeded state.",
       "criticalPath": true,
       "storyId": "US-008",
-      "acIndex": -1,
-      "moduleId": "leveling"
+      "acIndex": 0,
+      "moduleId": "level-e2e"
     },
     {
-      "scenario": "Audio set and mute persistence",
-      "description": "[US-009#0] Trigger key game events to confirm distinct sounds; [US-009#2] toggle mute, reload, verify persisted silence state.",
+      "scenario": "Audio and mute persistence",
+      "description": "[US-009#2] Verify event sounds and siren playback-rate changes; toggle mute and confirm immediate silence and persistence after reload.",
       "criticalPath": true,
       "storyId": "US-009",
-      "acIndex": -1,
-      "moduleId": "audio"
+      "acIndex": 2,
+      "moduleId": "audio-e2e"
     },
     {
-      "scenario": "Overlay screens flow and pause freeze",
-      "description": "[US-010#1] Start->3-2-1-GO->play, pause/resume freeze check, level-complete and game-over overlays with restart path.",
+      "scenario": "Overlay accessibility flow",
+      "description": "[US-010#0] Validate Start/Countdown/Pause/Level Complete/Game Over overlays have readable text, focusable controls, and correct transitions.",
       "criticalPath": true,
       "storyId": "US-010",
-      "acIndex": -1,
-      "moduleId": "screens"
+      "acIndex": 0,
+      "moduleId": "screen-e2e"
     },
     {
-      "scenario": "High score qualification and top-10 persistence",
-      "description": "[US-011#1] Finish with qualifying score, enter 3 initials, save, reload, verify sorted top-10 retained.",
+      "scenario": "High score qualification and persistence",
+      "description": "[US-011#1] Finish qualifying game, enter 3-letter initials, save, reload browser context, and verify sorted top-10 retained.",
       "criticalPath": true,
       "storyId": "US-011",
-      "acIndex": -1,
-      "moduleId": "highscores"
+      "acIndex": 1,
+      "moduleId": "highscore-e2e"
     },
     {
-      "scenario": "Keyboard-only accessibility across menus",
-      "description": "[US-012#0] Navigate Start/Pause/GameOver/settings via keyboard only; verify visible focus indicators and pause/mute hotkeys in gameplay.",
+      "scenario": "Keyboard-only accessibility journey",
+      "description": "[US-012#0] Complete start->pause->resume->gameover->restart using only keyboard; assert visible focus indicators on each interactive screen.",
       "criticalPath": true,
       "storyId": "US-012",
-      "acIndex": -1,
-      "moduleId": "a11y"
+      "acIndex": 0,
+      "moduleId": "a11y-e2e"
     },
     {
-      "scenario": "Colorblind palette toggle persists and does not affect highscores",
-      "description": "[US-013#2] Toggle palette, verify immediate ghost color change, reload persistence, and unchanged high score data.",
+      "scenario": "Colorblind palette persistence",
+      "description": "[US-013#1] Toggle colorblind palette in settings, verify immediate ghost color change and persistence after reload without high score corruption.",
       "criticalPath": false,
       "storyId": "US-013",
-      "acIndex": 2,
-      "moduleId": "settings"
+      "acIndex": 1,
+      "moduleId": "palette-e2e"
     },
     {
-      "scenario": "Offline play after first load",
-      "description": "[US-014#0] Visit online once, then run browser offline and confirm app boots and playable session starts from cache.",
+      "scenario": "Offline and performance/budget validation",
+      "description": "[US-014#0] First load online then switch offline and reload successfully; run FPS/responsive checks across viewport sizes and verify static asset budget report under 2MB.",
       "criticalPath": true,
       "storyId": "US-014",
       "acIndex": 0,
-      "moduleId": "pwa-offline"
+      "moduleId": "pwa-perf-e2e"
     },
     {
-      "scenario": "Responsive and smooth gameplay smoke across browsers",
-      "description": "[US-014#2] Run Chromium/Firefox/WebKit at 375px and 2560px viewports; verify layout scaling and frame-time budget smoke thresholds.",
-      "criticalPath": true,
-      "storyId": "US-014",
-      "acIndex": 2,
-      "moduleId": "cross-browser"
-    },
-    {
-      "scenario": "End-to-end boot wiring from root entry",
-      "description": "[US-015#2] Launch production build from root, complete full session including pause, level transition, game over, and restart without manual intervention.",
+      "scenario": "Full app wiring end-to-end smoke",
+      "description": "[US-015#1] From root entry complete full playable session through start, countdown, gameplay, pause, level transition, game over, and restart without manual intervention.",
       "criticalPath": true,
       "storyId": "US-015",
-      "acIndex": 2,
-      "moduleId": "app-e2e"
+      "acIndex": 1,
+      "moduleId": "app-shell-e2e"
     }
   ],
   "coverageTargets": {
