@@ -135,7 +135,8 @@ export class Maze {
    * traversing the tunnel" (e.g. to slow ghosts down while inside it).
    */
   isTunnelPassage(row: number, col: number): boolean {
-    return row === TUNNEL_ROW;
+    if (row !== TUNNEL_ROW || col < 0 || col >= this.width) return false;
+    return this.getTile(row, col) !== 'wall';
   }
 
   /** Row index of the tunnel wraparound corridor. */
@@ -253,6 +254,20 @@ export class Maze {
     const width = this.width * tileSize;
     const height = this.height * tileSize;
     if (width <= 0 || height <= 0) return null;
+
+    // Reuse the existing offscreen canvas/context when the pixel dimensions
+    // haven't changed — only the tile size changing (which resizes the
+    // canvas) warrants allocating a new one. This avoids a canvas
+    // allocation + GC of the old one on every single dot/pellet eaten,
+    // since `rebuildCache` calls this on every cache invalidation.
+    if (
+      this.offscreenSource &&
+      this.offscreenContext &&
+      this.offscreenSource.width === width &&
+      this.offscreenSource.height === height
+    ) {
+      return this.offscreenContext;
+    }
 
     if (typeof OffscreenCanvas !== 'undefined') {
       const canvas = new OffscreenCanvas(width, height);

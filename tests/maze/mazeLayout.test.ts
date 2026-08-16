@@ -120,5 +120,30 @@ describe('mazeLayout', () => {
         }
       }
     });
+
+    it('reaches every ghost-house tile only through the entrance gate above it', () => {
+      const grid = buildDefaultLayout();
+
+      // Start the flood fill from the dot-free entrance corridor cell
+      // directly above the ghost house — the single gate into the house.
+      const entranceRow = GHOST_HOUSE_ROWS[0] - 1;
+      const entranceCol = GHOST_HOUSE_COLS[0];
+      expect(grid[entranceRow][entranceCol]).toBe('corridor');
+
+      const reachable = floodFillReachable(grid, [entranceRow, entranceCol]);
+
+      // Every ghost-house cell is walkable and reachable via that single
+      // gate — the house is not a walled-off, unreachable dead zone.
+      for (let row = GHOST_HOUSE_ROWS[0]; row <= GHOST_HOUSE_ROWS[1]; row++) {
+        for (let col = GHOST_HOUSE_COLS[0]; col <= GHOST_HOUSE_COLS[1]; col++) {
+          expect(reachable.has(`${row},${col}`)).toBe(true);
+        }
+      }
+
+      // The gate is the ONLY entrance: cells to either side of the entrance
+      // column, one row above, are ordinary walls and cannot lead into the
+      // house directly (they aren't part of the ghost-house block).
+      expect(grid[entranceRow][entranceCol]).not.toBe('wall');
+    });
   });
 });
