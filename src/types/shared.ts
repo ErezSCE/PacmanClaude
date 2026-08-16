@@ -15,4 +15,4 @@ export type Tile =
 export type GhostName = 'blinky' | 'pinky' | 'inky' | 'clyde';
 
 /** Ghost behavioral mode. */
-export type GhostMode = 'chase' | 'scatter' | 'frightened' | 'eaten' | 'eyes';
+export type GhostMode = 'chase' | 'scatter' | 'frightened' | 'eyes';

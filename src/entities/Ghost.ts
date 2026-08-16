@@ -10,11 +10,10 @@ export class Ghost {
   mode: GhostMode = 'scatter';
   direction: Direction = 'up';
   queuedDirection: Direction = 'up';
-  frightened = false;
   
   // Frightened state properties
-  frightenedTimer = 0; // seconds
-  frightenedFlashStart = 0; // seconds
+  frightenedTimer = 0; // milliseconds
+  frightenedFlashStart = 0; // milliseconds
   isFlashing = false;
   
   // Eyes/respawn properties
