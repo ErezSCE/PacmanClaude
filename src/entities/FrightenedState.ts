@@ -1,6 +1,5 @@
 import type { Ghost } from './Ghost';
 import type { Maze } from '../maze/Maze';
-import { loadMaze } from '../maze/Maze';
 
 /**
  * Manages the frightened state lifecycle for ghosts.
@@ -23,7 +22,7 @@ const EYES_RETURN_SPEED = 2; // Pixels per frame for eyes returning to ghost hou
  */
 export function activateFrightenedMode(ghost: Ghost): void {
   // Store previous mode for restoration
-  (ghost as any).previousMode = ghost.mode;
+  ghost.previousMode = ghost.mode;
   
   ghost.mode = 'frightened';
   ghost.frightenedTimer = FRIGHTENED_DURATION_MS;
@@ -98,8 +97,7 @@ function updateFlashingState(ghost: Ghost, dt: number): void {
  */
 export function exitFrightenedMode(ghost: Ghost): void {
   // Restore previous mode or default to 'chase'
-  const previousMode = (ghost as any).previousMode;
-  ghost.mode = (previousMode === 'chase' || previousMode === 'scatter') ? previousMode : 'chase';
+  ghost.mode = (ghost.previousMode === 'chase' || ghost.previousMode === 'scatter') ? ghost.previousMode : 'chase';
   ghost.frightenedTimer = 0;
   ghost.isFlashing = false;
 }
@@ -149,9 +147,12 @@ export function updateEyesMovement(ghost: Ghost, dt: number, maze: Maze): boolea
     const dy = targetPixelY - ghost.y;
     const distance = Math.sqrt(dx * dx + dy * dy);
     
-    if (distance > EYES_RETURN_SPEED) {
-      const moveX = (dx / distance) * EYES_RETURN_SPEED;
-      const moveY = (dy / distance) * EYES_RETURN_SPEED;
+    // Speed is pixels per second × seconds elapsed
+    const speed = EYES_RETURN_SPEED * dt;
+    
+    if (distance > speed) {
+      const moveX = (dx / distance) * speed;
+      const moveY = (dy / distance) * speed;
       ghost.x += moveX;
       ghost.y += moveY;
     } else {
@@ -237,8 +238,7 @@ function findNextPathStep(
  */
 export function respawnGhost(ghost: Ghost): void {
   // Restore previous mode or default to 'chase'
-  const previousMode = (ghost as any).previousMode;
-  ghost.mode = (previousMode === 'chase' || previousMode === 'scatter') ? previousMode : 'chase';
+  ghost.mode = (ghost.previousMode === 'chase' || ghost.previousMode === 'scatter') ? ghost.previousMode : 'chase';
   ghost.x = ghost.ghostHouseX;
   ghost.y = ghost.ghostHouseY;
   ghost.direction = 'up';

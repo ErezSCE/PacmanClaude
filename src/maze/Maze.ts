@@ -32,5 +32,16 @@ export class Maze {
  * Loads and returns a Maze instance with the default level layout.
  */
 export function loadMaze(): Maze {
-  return new Maze();
+  const maze = new Maze();
+  // Set a minimal default grid so pathfinding can work
+  // This is a simple 5x5 grid with corridors and walls
+  const defaultGrid: Tile[][] = [
+    ['wall', 'wall', 'wall', 'wall', 'wall'],
+    ['wall', 'corridor', 'corridor', 'corridor', 'wall'],
+    ['wall', 'corridor', 'wall', 'corridor', 'wall'],
+    ['wall', 'corridor', 'corridor', 'corridor', 'wall'],
+    ['wall', 'wall', 'wall', 'wall', 'wall']
+  ];
+  maze.setGrid(defaultGrid);
+  return maze;
 }

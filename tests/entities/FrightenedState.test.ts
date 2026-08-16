@@ -191,10 +191,10 @@ describe('FrightenedState', () => {
 
     it('should move eyes toward ghost house', () => {
       ghost.mode = 'eyes';
-      ghost.x = 100;
-      ghost.y = 100;
-      ghost.ghostHouseX = 200;
-      ghost.ghostHouseY = 200;
+      ghost.x = 16;
+      ghost.y = 16;
+      ghost.ghostHouseX = 48;
+      ghost.ghostHouseY = 48;
       
       const initialDistance = Math.sqrt(
         (ghost.ghostHouseX - ghost.x) ** 2 + (ghost.ghostHouseY - ghost.y) ** 2
