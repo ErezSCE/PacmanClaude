@@ -14,6 +14,10 @@
   --maze-blue: #2121de;
   --pacman-yellow: #ffff00;
   --font-family: 'Press Start 2P', 'Courier New', monospace;
+  --ghost-blinky-color: #FF0000;
+  --ghost-pinky-color: #FFB8FF;
+  --ghost-inky-color: #00FFFF;
+  --ghost-clyde-color: #FFB847;
 }
 
 html,

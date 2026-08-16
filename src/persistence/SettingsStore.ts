@@ -26,7 +26,11 @@ export function getSettings(): Settings {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return { ...DEFAULT_SETTINGS };
-    const parsed: Settings = JSON.parse(raw);
+    const parsed = JSON.parse(raw);
+    // Guard against non-object values (e.g., null, primitives, arrays)
+    if (typeof parsed !== 'object' || parsed === null) {
+      return { ...DEFAULT_SETTINGS };
+    }
     // Ensure all required fields exist (backward compatibility)
     return {
       muteEnabled: parsed.muteEnabled ?? DEFAULT_SETTINGS.muteEnabled,
@@ -40,7 +44,12 @@ export function getSettings(): Settings {
 
 /**
  * Saves the settings object to localStorage.
+ * Silently fails if storage quota is exceeded.
  */
 export function saveSettings(settings: Settings): void {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+  } catch {
+    // Storage full or unavailable — settings will not persist
+  }
 }
