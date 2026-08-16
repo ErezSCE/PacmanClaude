@@ -68,6 +68,64 @@ body {
   }
 }
 
+/* On-screen directional controls (touch/mobile) */
+.onscreen-controls {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  z-index: 10;
+  display: grid;
+  grid-template-columns: repeat(3, 56px);
+  grid-template-rows: repeat(2, 56px);
+  gap: 6px;
+  touch-action: none;
+}
+
+.onscreen-controls__button {
+  width: 56px;
+  height: 56px;
+  border-radius: 8px;
+  border: 2px solid var(--pacman-yellow);
+  background-color: rgba(0, 0, 0, 0.6);
+  color: var(--pacman-yellow);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.onscreen-controls__button:active {
+  background-color: rgba(255, 255, 0, 0.3);
+}
+
+.onscreen-controls__button--up {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.onscreen-controls__button--left {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.onscreen-controls__button--right {
+  grid-column: 3;
+  grid-row: 2;
+}
+
+.onscreen-controls__button--down {
+  grid-column: 2;
+  grid-row: 2;
+}
+
+/* Hidden by default on larger pointer-capable screens; shown on touch/mobile */
+@media (min-width: 900px) {
+  .onscreen-controls {
+    display: none;
+  }
+}
+
 @media (min-width: 2560px) {
   #app {
     max-width: 2560px;
