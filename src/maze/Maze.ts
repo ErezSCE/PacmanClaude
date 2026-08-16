@@ -21,6 +21,28 @@ const DEFAULT_COLORS: MazeColors = {
 };
 
 /**
+ * Minimal drawing surface `renderTile` needs. Both `CanvasRenderingContext2D`
+ * and `OffscreenCanvasRenderingContext2D` satisfy this structurally, which
+ * lets the same tile-drawing code run against the visible canvas context
+ * (fallback path) or an offscreen cache context (fast path).
+ */
+type TileRenderContext = Pick<
+  CanvasRenderingContext2D,
+  'fillStyle' | 'fillRect' | 'beginPath' | 'arc' | 'fill'
+>;
+
+function colorsEqual(a: MazeColors, b: MazeColors): boolean {
+  return (
+    a.wall === b.wall &&
+    a.dot === b.dot &&
+    a.powerPellet === b.powerPellet &&
+    a.ghostHouse === b.ghostHouse &&
+    a.tunnel === b.tunnel &&
+    a.background === b.background
+  );
+}
+
+/**
  * Holds the tile grid (walls, corridors, dots, power pellets, tunnel,
  * ghost house), tracks remaining consumables, and draws the maze to a
  * Canvas 2D rendering context each frame.
@@ -32,7 +54,28 @@ export class Maze {
   private readonly initialDotCount: number;
   private readonly initialPelletCount: number;
 
+  // Offscreen render cache: the static parts of the maze (walls, corridors,
+  // dots, pellets, ghost house, tunnel) rarely change frame-to-frame, so we
+  // draw them once into an offscreen canvas and blit that with a single
+  // `drawImage()` call per frame instead of repeating ~400+ `fillRect`/`arc`
+  // calls every frame. The cache is invalidated whenever a dot/pellet is
+  // eaten (its tile changes) or the caller renders at a different tile size
+  // / palette. If offscreen canvases aren't available in the current
+  // environment (e.g. a test runtime without Canvas support), we fall back
+  // to direct per-tile rendering onto the provided context every frame.
+  private offscreenSource: OffscreenCanvas | HTMLCanvasElement | null = null;
+  private offscreenContext: TileRenderContext | null = null;
+  private cacheValid = false;
+  private cachedTileSize = 0;
+  private cachedColors: MazeColors | null = null;
+
   constructor(grid: Tile[][]) {
+    // Defensive copy so external mutation of the source array (or its rows)
+    // can't reach into this instance's internal state. A shallow per-row
+    // spread is intentionally sufficient here (not a deep clone): `Tile` is
+    // a string union of primitives, so copying each row's array copies
+    // every cell value by value — there is no nested object/array to worry
+    // about aliasing.
     this.grid = grid.map((row) => [...row]);
 
     let dots = 0;
@@ -73,9 +116,26 @@ export class Maze {
     return this.getTile(row, col) !== 'wall';
   }
 
-  /** Whether this tile is part of the left-right tunnel wraparound. */
+  /**
+   * Whether this tile is one of the two wraparound edge cells of the
+   * tunnel row (i.e. where an entity actually teleports from one side of
+   * the maze to the other). The interior of the tunnel row is plain,
+   * dot-free `corridor` track and is NOT reported by this method — use
+   * {@link isTunnelPassage} to detect the full row (edges + interior).
+   */
   isTunnel(row: number, col: number): boolean {
     return this.getTile(row, col) === 'tunnel';
+  }
+
+  /**
+   * Whether [row, col] lies anywhere within the tunnel passage row,
+   * including its dot-free `corridor` interior — not just the two
+   * teleporting edge cells reported by {@link isTunnel}. Useful for
+   * gameplay logic that needs to detect "is this entity currently
+   * traversing the tunnel" (e.g. to slow ghosts down while inside it).
+   */
+  isTunnelPassage(row: number, col: number): boolean {
+    return row === TUNNEL_ROW;
   }
 
   /** Row index of the tunnel wraparound corridor. */
@@ -94,7 +154,11 @@ export class Maze {
   eatDot(row: number, col: number): boolean {
     if (this.getTile(row, col) !== 'dot') return false;
     this.grid[row][col] = 'empty';
-    this.dotsRemaining--;
+    // Clamp defensively: even if the grid were ever corrupted (e.g. a tile
+    // manually set to 'dot' without going through this method), the
+    // remaining count should never be allowed to go negative.
+    this.dotsRemaining = Math.max(0, this.dotsRemaining - 1);
+    this.cacheValid = false;
     return true;
   }
 
@@ -109,7 +173,9 @@ export class Maze {
   eatPowerPellet(row: number, col: number): boolean {
     if (this.getTile(row, col) !== 'power-pellet') return false;
     this.grid[row][col] = 'empty';
-    this.pelletsRemaining--;
+    // Same defensive clamp as `eatDot` — never let the count go negative.
+    this.pelletsRemaining = Math.max(0, this.pelletsRemaining - 1);
+    this.cacheValid = false;
     return true;
   }
 
@@ -143,6 +209,19 @@ export class Maze {
     tileSize: number,
     colors: MazeColors = DEFAULT_COLORS,
   ): void {
+    const paletteChanged = !this.cachedColors || !colorsEqual(this.cachedColors, colors);
+    if (!this.cacheValid || this.cachedTileSize !== tileSize || paletteChanged) {
+      this.rebuildCache(tileSize, colors);
+    }
+
+    if (this.offscreenSource && this.offscreenContext) {
+      ctx.drawImage(this.offscreenSource, 0, 0);
+      return;
+    }
+
+    // Offscreen caching unavailable in this environment (no Canvas support,
+    // e.g. some test runtimes) — fall back to direct per-tile rendering
+    // onto the provided context every frame.
     for (let row = 0; row < this.height; row++) {
       for (let col = 0; col < this.width; col++) {
         this.renderTile(ctx, this.grid[row][col], row, col, tileSize, colors);
@@ -150,8 +229,56 @@ export class Maze {
     }
   }
 
+  /** (Re)draws every tile into the offscreen cache canvas, if available. */
+  private rebuildCache(tileSize: number, colors: MazeColors): void {
+    this.cacheValid = true;
+    this.cachedTileSize = tileSize;
+    this.cachedColors = { ...colors };
+
+    const context = this.ensureOffscreenContext(tileSize);
+    if (!context) return;
+
+    for (let row = 0; row < this.height; row++) {
+      for (let col = 0; col < this.width; col++) {
+        this.renderTile(context, this.grid[row][col], row, col, tileSize, colors);
+      }
+    }
+  }
+
+  /**
+   * Lazily creates (or resizes) the offscreen cache canvas and returns its
+   * 2D context, or `null` if this environment has no usable Canvas support.
+   */
+  private ensureOffscreenContext(tileSize: number): TileRenderContext | null {
+    const width = this.width * tileSize;
+    const height = this.height * tileSize;
+    if (width <= 0 || height <= 0) return null;
+
+    if (typeof OffscreenCanvas !== 'undefined') {
+      const canvas = new OffscreenCanvas(width, height);
+      const context = canvas.getContext('2d');
+      if (!context) return null;
+      this.offscreenSource = canvas;
+      this.offscreenContext = context as unknown as TileRenderContext;
+      return this.offscreenContext;
+    }
+
+    if (typeof document !== 'undefined' && typeof document.createElement === 'function') {
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const context = canvas.getContext('2d');
+      if (!context) return null;
+      this.offscreenSource = canvas;
+      this.offscreenContext = context;
+      return this.offscreenContext;
+    }
+
+    return null;
+  }
+
   private renderTile(
-    ctx: CanvasRenderingContext2D,
+    ctx: TileRenderContext,
     tile: Tile,
     row: number,
     col: number,
