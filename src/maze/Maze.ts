@@ -8,6 +8,7 @@ export interface MazeColors {
   powerPellet: string;
   ghostHouse: string;
   tunnel: string;
+  background: string;
 }
 
 const DEFAULT_COLORS: MazeColors = {
@@ -16,6 +17,7 @@ const DEFAULT_COLORS: MazeColors = {
   powerPellet: '#ffb8ae',
   ghostHouse: '#0b0b2a',
   tunnel: '#050514',
+  background: '#000000',
 };
 
 /**
@@ -150,6 +152,12 @@ export class Maze {
   ): void {
     const x = col * tileSize;
     const y = row * tileSize;
+
+    // Always paint a background first so corridor/empty tiles don't leave
+    // stale pixels from a previous frame's entity sprites when the caller
+    // does not clear the whole canvas before calling render().
+    ctx.fillStyle = colors.background;
+    ctx.fillRect(x, y, tileSize, tileSize);
 
     switch (tile) {
       case 'wall':
