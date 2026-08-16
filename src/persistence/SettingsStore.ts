@@ -44,19 +44,25 @@ export function getSettings(): Settings {
           ? parsed.colorblindPaletteEnabled
           : DEFAULT_SETTINGS.colorblindPaletteEnabled,
     };
-  } catch {
+  } catch (e) {
+    if (import.meta.env.DEV) {
+      console.warn('Failed to read settings from localStorage:', e);
+    }
     return { ...DEFAULT_SETTINGS };
   }
 }
 
 /**
  * Saves the settings object to localStorage.
- * Silently fails if storage quota is exceeded.
+ * Silently fails if storage quota is exceeded or localStorage is unavailable.
  */
 export function saveSettings(settings: Settings): void {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
-  } catch {
+  } catch (e) {
+    if (import.meta.env.DEV) {
+      console.warn('Failed to save settings to localStorage:', e);
+    }
     // Storage full or unavailable — settings will not persist
   }
 }

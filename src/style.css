@@ -14,6 +14,10 @@
   --maze-blue: #2121de;
   --pacman-yellow: #ffff00;
   --font-family: 'Press Start 2P', 'Courier New', monospace;
+  /* Ghost palette colors for colorblind-friendly mode.
+     NOTE: These CSS variables are read by the canvas rendering engine via getComputedStyle()
+     in src/rendering/ghostPalette.ts. They are not used by DOM elements (the game is canvas-only).
+     The palette can be toggled via the settings UI, which updates these values dynamically. */
   --ghost-blinky-color: #FF0000;
   --ghost-pinky-color: #FFB8FF;
   --ghost-inky-color: #00FFFF;

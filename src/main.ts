@@ -1,12 +1,5 @@
 import { registerServiceWorker } from './sw-register';
-import { getCurrentPalette, applyPaletteToCss, refreshPalette } from './rendering/ghostPalette';
-import { getSettings, saveSettings } from './persistence/SettingsStore';
-
-declare global {
-  interface Window {
-    toggleColorblindPalette: () => void;
-  }
-}
+import { getCurrentPalette, applyPaletteToCss } from './rendering/ghostPalette';
 
 /**
  * Application entry point.
@@ -19,18 +12,6 @@ async function boot(): Promise<void> {
 
   // Apply the current ghost palette (default or colorblind) from settings
   applyPaletteToCss(getCurrentPalette());
-
-  // Expose toggleColorblindPalette globally for UI controls
-  // Wraps the palette toggle with persistence logic
-  window.toggleColorblindPalette = (): void => {
-    const currentSettings = getSettings();
-    const newSettings = {
-      ...currentSettings,
-      colorblindPaletteEnabled: !currentSettings.colorblindPaletteEnabled,
-    };
-    saveSettings(newSettings);
-    refreshPalette();
-  };
 
   // Future: initialise ScreenManager, InputManager, GameState, GameLoop here.
 }
