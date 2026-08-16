@@ -120,9 +120,7 @@ describe('SettingsStore', () => {
 
       // Mock localStorage.setItem to throw QuotaExceededError
       vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
-        const error = new DOMException('QuotaExceededError');
-        error.name = 'QuotaExceededError';
-        throw error;
+        throw new DOMException('QuotaExceededError', 'QuotaExceededError');
       });
 
       // Should not throw
