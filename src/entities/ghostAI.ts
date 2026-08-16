@@ -16,6 +16,14 @@ const DIRECTION_OFFSETS: Record<Direction, TargetTile> = {
   right: { row: 0, col: 1 },
 };
 
+/** Map from a direction to its reverse. */
+export const REVERSE_DIRECTION: Record<Direction, Direction> = {
+  up: 'down',
+  down: 'up',
+  left: 'right',
+  right: 'left',
+};
+
 /**
  * Fixed scatter-mode corner targets, one per ghost personality, matching
  * the classic arcade behavior of each ghost retreating to its own corner.
@@ -26,6 +34,33 @@ export const SCATTER_TARGETS: Record<GhostName, TargetTile> = {
   inky: { row: 34, col: 27 },
   clyde: { row: 34, col: 0 },
 };
+
+/**
+ * The tile coordinate of the ghost house entrance, used as the target
+ * for eaten ghosts returning as eyes.
+ */
+export const GHOST_HOUSE_TARGET: TargetTile = { row: 14, col: 13 };
+
+/**
+ * Default frightened-mode duration in milliseconds (classic: ~6 seconds,
+ * varies by level — this is the base value).
+ */
+export const FRIGHTENED_DURATION = 6000;
+
+/**
+ * Duration in milliseconds before frightened mode ends during which
+ * ghosts flash/blink as a warning to the player.
+ */
+export const FLASH_WARNING_TIME = 2000;
+
+/** Normal ghost movement speed (tiles per second). */
+export const GHOST_SPEED_NORMAL = 7.5;
+
+/** Frightened ghost movement speed — slower than normal. */
+export const GHOST_SPEED_FRIGHTENED = 5.0;
+
+/** Eyes (eaten) ghost movement speed — faster than normal for quick return. */
+export const GHOST_SPEED_EYES = 15.0;
 
 /**
  * Classic chase/scatter alternation schedule. Durations are in milliseconds;
@@ -86,12 +121,26 @@ export class GhostModeTimer {
  * Chooses the target tile for a ghost based on its current mode and, when
  * chasing, its distinct personality (direct chase, ambush, flank, or
  * chase/random hybrid).
+ *
+ * Handles all ghost modes:
+ * - scatter → fixed corner target
+ * - chase → personality-specific target
+ * - frightened → pseudo-random wandering target
+ * - eaten → ghost house entrance for eyes return
  */
 export function chooseTarget(
   ghost: Ghost,
   pacman: PacMan,
   blinky?: Ghost,
 ): TargetTile {
+  if (ghost.mode === 'eaten') {
+    return GHOST_HOUSE_TARGET;
+  }
+
+  if (ghost.mode === 'frightened') {
+    return frightenedTarget(ghost);
+  }
+
   if (ghost.mode === 'scatter') {
     return SCATTER_TARGETS[ghost.name];
   }
@@ -106,6 +155,19 @@ export function chooseTarget(
     case 'clyde':
       return clydeTarget(ghost, pacman);
   }
+}
+
+/**
+ * Frightened target: produces a pseudo-random target tile based on the
+ * ghost's current position to create erratic wandering behavior.
+ * The target changes based on position so the ghost doesn't just stand still.
+ */
+export function frightenedTarget(ghost: Ghost): TargetTile {
+  // Use a simple hash of position to produce pseudo-random but deterministic targets
+  const posHash = Math.floor(ghost.x * 31 + ghost.y * 17);
+  const row = Math.abs(posHash % 31) + 1;
+  const col = Math.abs((posHash * 7 + 13) % 28);
+  return { row, col };
 }
 
 /** Blinky: direct chase — always targets Pac-Man's current tile. */

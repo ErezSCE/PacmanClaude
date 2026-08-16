@@ -1,6 +1,16 @@
 import type { Direction, GhostName, GhostMode } from '../types/shared';
 import type { PacMan } from './PacMan';
-import { chooseTarget, GhostModeTimer, type TargetTile } from './ghostAI';
+import {
+  chooseTarget,
+  GhostModeTimer,
+  REVERSE_DIRECTION,
+  GHOST_HOUSE_TARGET,
+  FLASH_WARNING_TIME,
+  GHOST_SPEED_NORMAL,
+  GHOST_SPEED_FRIGHTENED,
+  GHOST_SPEED_EYES,
+  type TargetTile,
+} from './ghostAI';
 
 /**
  * Staggered ghost-house release delays (milliseconds) applied at level
@@ -24,11 +34,25 @@ export class Ghost {
   mode: GhostMode = 'scatter';
   direction: Direction = 'up';
   frightened = false;
+  speed: number = GHOST_SPEED_NORMAL;
+
+  /** Whether the ghost is currently flashing (warning before frightened ends). */
+  flashing = false;
 
   /** Whether the ghost is still waiting inside the ghost house. */
   inGhostHouse: boolean;
+
   /** Elapsed time (ms) spent waiting inside the ghost house. */
   private houseTimer = 0;
+
+  /** Remaining time (ms) in frightened mode. */
+  private frightenedTimer = 0;
+
+  /** Total duration (ms) of the current frightened period. */
+  private frightenedDuration = 0;
+
+  /** The mode the ghost was in before entering frightened, for restoration. */
+  private preFrightenedMode: 'chase' | 'scatter' = 'scatter';
 
   constructor(name: GhostName) {
     this.name = name;
@@ -59,6 +83,10 @@ export class Ghost {
     this.houseTimer = 0;
     this.mode = 'scatter';
     this.frightened = false;
+    this.flashing = false;
+    this.speed = GHOST_SPEED_NORMAL;
+    this.frightenedTimer = 0;
+    this.frightenedDuration = 0;
   }
 
   /**
@@ -79,5 +107,119 @@ export class Ghost {
    */
   getTarget(pacman: PacMan, blinky?: Ghost): TargetTile {
     return chooseTarget(this, pacman, blinky);
+  }
+
+  /**
+   * Transitions the ghost into frightened mode after a power pellet is eaten.
+   * Reverses the ghost's direction, slows it down, and starts the frightened
+   * timer. Does not affect ghosts that are already eaten (eyes) or still
+   * inside the ghost house.
+   *
+   * If the ghost is already frightened, the timer is reset (stacking pellets
+   * extends the frightened window).
+   */
+  enterFrightened(duration: number): void {
+    // Eaten ghosts (eyes) are immune to frightened transitions
+    if (this.mode === 'eaten') {
+      return;
+    }
+
+    // Ghosts still in the house are not affected
+    if (this.inGhostHouse) {
+      return;
+    }
+
+    // Save the pre-frightened mode for restoration (only if not already frightened)
+    if (this.mode !== 'frightened') {
+      this.preFrightenedMode = this.mode as 'chase' | 'scatter';
+      // Reverse direction on initial entry
+      this.direction = REVERSE_DIRECTION[this.direction];
+    }
+
+    this.mode = 'frightened';
+    this.frightened = true;
+    this.flashing = false;
+    this.speed = GHOST_SPEED_FRIGHTENED;
+    this.frightenedTimer = 0;
+    this.frightenedDuration = duration;
+  }
+
+  /**
+   * Updates the frightened timer. When the timer reaches the flash warning
+   * threshold, enables flashing. When the full duration expires, returns
+   * the ghost to its pre-frightened mode at normal speed.
+   *
+   * @param dt - Elapsed time in milliseconds since last update.
+   */
+  updateFrightened(dt: number): void {
+    if (this.mode !== 'frightened') {
+      return;
+    }
+
+    this.frightenedTimer += dt;
+
+    // Check if we've entered the flash warning window
+    if (
+      this.frightenedTimer >=
+      this.frightenedDuration - FLASH_WARNING_TIME
+    ) {
+      this.flashing = true;
+    }
+
+    // Check if frightened mode has expired
+    if (this.frightenedTimer >= this.frightenedDuration) {
+      this.exitFrightened();
+    }
+  }
+
+  /**
+   * Exits frightened mode, restoring the ghost to its previous chase/scatter
+   * mode at normal speed.
+   */
+  private exitFrightened(): void {
+    this.mode = this.preFrightenedMode;
+    this.frightened = false;
+    this.flashing = false;
+    this.speed = GHOST_SPEED_NORMAL;
+    this.frightenedTimer = 0;
+    this.frightenedDuration = 0;
+  }
+
+  /**
+   * Transitions the ghost into the eaten (eyes) state after being consumed
+   * by Pac-Man while frightened. The ghost moves at high speed back to the
+   * ghost house.
+   */
+  enterEaten(): void {
+    this.mode = 'eaten';
+    this.speed = GHOST_SPEED_EYES;
+    this.frightened = false;
+    this.flashing = false;
+    this.frightenedTimer = 0;
+    this.frightenedDuration = 0;
+  }
+
+  /**
+   * Checks whether the ghost (in eaten/eyes mode) has reached the ghost
+   * house entrance tile, using a proximity threshold for smooth arrival.
+   */
+  hasReachedHouse(): boolean {
+    const dx = Math.abs(this.x - GHOST_HOUSE_TARGET.col);
+    const dy = Math.abs(this.y - GHOST_HOUSE_TARGET.row);
+    return dx < 0.5 && dy < 0.5;
+  }
+
+  /**
+   * Respawns the ghost from the ghost house after returning as eyes.
+   * Resets to scatter mode at normal speed, ready to re-enter the maze.
+   */
+  respawnFromHouse(): void {
+    this.mode = 'scatter';
+    this.speed = GHOST_SPEED_NORMAL;
+    this.frightened = false;
+    this.flashing = false;
+    this.inGhostHouse = false;
+    this.frightenedTimer = 0;
+    this.frightenedDuration = 0;
   }
 }
