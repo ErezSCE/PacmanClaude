@@ -4,7 +4,7 @@
  */
 
 import type { GhostName } from '../types/shared';
-import { getSettings, saveSettings } from '../persistence/SettingsStore';
+import { getSettings } from '../persistence/SettingsStore';
 
 /**
  * Type for ghost color palettes, keyed by ghost name.
@@ -42,12 +42,7 @@ let cachedPalette: GhostPalette | null = null;
 /**
  * Gets the current ghost palette based on settings.
  * Returns the appropriate palette (default or colorblind) based on the colorblindPaletteEnabled setting.
- * Caches the result to avoid repeated localStorage reads.
- *
- * IMPORTANT: The cache is NOT automatically invalidated when settings change.
- * If you call saveSettings() to toggle colorblindPaletteEnabled, you MUST also call
- * clearPaletteCache() and applyPaletteToCss(getCurrentPalette()) to update the UI.
- * Consider using toggleColorblindPalette() instead, which handles this automatically.
+ * Results are cached to avoid repeated localStorage reads.
  */
 export function getCurrentPalette(): GhostPalette {
   if (cachedPalette === null) {
@@ -65,19 +60,15 @@ export function clearPaletteCache(): void {
 }
 
 /**
- * Toggles the colorblind palette setting and applies it immediately.
- * This is the recommended way to change the palette at runtime.
- * Handles cache invalidation and CSS updates automatically.
+ * Refreshes and applies the current palette based on the latest settings.
+ * Clears the palette cache and applies the appropriate palette (default or colorblind)
+ * based on the current colorblindPaletteEnabled setting.
+ * The caller is responsible for persisting any setting changes via saveSettings().
  */
-export function toggleColorblindPalette(): void {
-  const currentSettings = getSettings();
-  const newSettings = {
-    ...currentSettings,
-    colorblindPaletteEnabled: !currentSettings.colorblindPaletteEnabled,
-  };
-  saveSettings(newSettings);
+export function refreshPalette(): void {
   clearPaletteCache();
-  applyPaletteToCss(getCurrentPalette());
+  const palette = getCurrentPalette();
+  applyPaletteToCss(palette);
 }
 
 /**

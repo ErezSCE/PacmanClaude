@@ -31,7 +31,9 @@ export function getSettings(): Settings {
     if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
       return { ...DEFAULT_SETTINGS };
     }
-    // Ensure all required fields exist with explicit type validation
+    // Ensure all required fields exist with explicit type validation.
+    // NOTE: Each field is validated individually with typeof checks.
+    // If new fields are added to Settings, add corresponding validation here.
     return {
       muteEnabled:
         typeof parsed.muteEnabled === 'boolean'
