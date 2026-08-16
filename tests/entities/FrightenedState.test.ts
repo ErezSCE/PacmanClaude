@@ -303,9 +303,10 @@ describe('FrightenedState', () => {
       expect(ghost.mode).toBe('frightened');
       expect(ghost.direction).toBe('down'); // Reversed from 'up'
 
-      // Update for 5 seconds (still in frightened mode)
-      updateFrightenedState(ghost, 5000);
+      // Update for 3.5 seconds (still in frightened mode, not yet in flash window)
+      updateFrightenedState(ghost, 3500);
       expect(ghost.mode).toBe('frightened');
+      expect(ghost.isFlashing).toBe(false);
 
       // Update for 1.5 more seconds (now in flash window)
       updateFrightenedState(ghost, 1500);
@@ -313,7 +314,7 @@ describe('FrightenedState', () => {
       expect(ghost.isFlashing).toBe(true);
 
       // Update for remaining time
-      updateFrightenedState(ghost, 500);
+      updateFrightenedState(ghost, 1000);
       expect(ghost.mode).toBe('chase');
       expect(ghost.isFlashing).toBe(false);
     });
