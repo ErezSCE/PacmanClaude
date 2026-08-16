@@ -63,6 +63,15 @@ function computeTile(row: number, col: number): Tile {
   }
 
   // The tunnel row's interior stays dot-free for a clean wraparound run.
+  // Design note: only the border cells (col === 0 / col === MAZE_WIDTH - 1)
+  // are typed as 'tunnel' — those are the cells where wraparound actually
+  // occurs. The interior of this row is deliberately typed as plain
+  // 'corridor' rather than 'tunnel' because it is dot-free but otherwise
+  // ordinary walkable track. Gameplay logic that needs to detect "is this
+  // entity anywhere in the tunnel passage" (e.g. to slow ghosts down while
+  // traversing it) should compare `row === maze.getTunnelRow()` directly
+  // rather than relying solely on `isTunnel()`, which only reports the two
+  // wraparound edge cells.
   if (row === TUNNEL_ROW) {
     return 'corridor';
   }

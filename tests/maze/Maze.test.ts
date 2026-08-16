@@ -293,6 +293,42 @@ describe('Maze', () => {
     });
   });
 
+  describe('getTotalEaten', () => {
+    it('starts at zero when nothing has been eaten', () => {
+      const grid: Tile[][] = [
+        ['wall', 'wall', 'wall', 'wall'],
+        ['wall', 'dot', 'power-pellet', 'wall'],
+        ['wall', 'dot', 'wall', 'wall'],
+        ['wall', 'wall', 'wall', 'wall'],
+      ];
+      const tinyMaze = new Maze(grid);
+      expect(tinyMaze.getTotalEaten()).toBe(0);
+    });
+
+    it('accumulates eaten dots and power pellets across the level', () => {
+      const grid: Tile[][] = [
+        ['wall', 'wall', 'wall', 'wall'],
+        ['wall', 'dot', 'power-pellet', 'wall'],
+        ['wall', 'dot', 'wall', 'wall'],
+        ['wall', 'wall', 'wall', 'wall'],
+      ];
+      const tinyMaze = new Maze(grid);
+
+      tinyMaze.eatDot(1, 1);
+      expect(tinyMaze.getTotalEaten()).toBe(1);
+
+      tinyMaze.eatPowerPellet(1, 2);
+      expect(tinyMaze.getTotalEaten()).toBe(2);
+
+      tinyMaze.eatDot(2, 1);
+      expect(tinyMaze.getTotalEaten()).toBe(3);
+
+      // Re-eating an already-eaten tile is a no-op and must not inflate the count.
+      expect(tinyMaze.eatDot(1, 1)).toBe(false);
+      expect(tinyMaze.getTotalEaten()).toBe(3);
+    });
+  });
+
   describe('level completion', () => {
     it('is not complete while dots or pellets remain', () => {
       expect(maze.isComplete()).toBe(false);

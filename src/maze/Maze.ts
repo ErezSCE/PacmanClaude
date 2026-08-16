@@ -86,6 +86,10 @@ export class Maze {
   /**
    * Removes the dot at [row, col] if present. Returns true if a dot was
    * eaten.
+   *
+   * Assumes single-threaded, sequential invocation (as is the case in the
+   * browser's per-frame game loop). Calling this concurrently for the same
+   * tile is not supported and could decrement `dotsRemaining` incorrectly.
    */
   eatDot(row: number, col: number): boolean {
     if (this.getTile(row, col) !== 'dot') return false;
@@ -97,6 +101,10 @@ export class Maze {
   /**
    * Removes the power pellet at [row, col] if present. Returns true if a
    * pellet was eaten.
+   *
+   * Assumes single-threaded, sequential invocation (as is the case in the
+   * browser's per-frame game loop). Calling this concurrently for the same
+   * tile is not supported and could decrement `pelletsRemaining` incorrectly.
    */
   eatPowerPellet(row: number, col: number): boolean {
     if (this.getTile(row, col) !== 'power-pellet') return false;
@@ -153,12 +161,11 @@ export class Maze {
     const x = col * tileSize;
     const y = row * tileSize;
 
-    // Always paint a background first so corridor/empty tiles don't leave
-    // stale pixels from a previous frame's entity sprites when the caller
-    // does not clear the whole canvas before calling render().
-    ctx.fillStyle = colors.background;
-    ctx.fillRect(x, y, tileSize, tileSize);
-
+    // Only paint a background for tiles that don't fully cover their own
+    // cell (corridor/empty/dot/pellet). Wall/ghost-house/tunnel tiles draw
+    // an opaque fillRect over the whole cell themselves, so painting the
+    // background underneath them first would just be a wasted fill call
+    // repeated ~400 times per frame across the grid.
     switch (tile) {
       case 'wall':
         ctx.fillStyle = colors.wall;
@@ -173,12 +180,16 @@ export class Maze {
         ctx.fillRect(x, y, tileSize, tileSize);
         break;
       case 'dot':
+        ctx.fillStyle = colors.background;
+        ctx.fillRect(x, y, tileSize, tileSize);
         ctx.fillStyle = colors.dot;
         ctx.beginPath();
         ctx.arc(x + tileSize / 2, y + tileSize / 2, Math.max(1, tileSize * 0.08), 0, Math.PI * 2);
         ctx.fill();
         break;
       case 'power-pellet':
+        ctx.fillStyle = colors.background;
+        ctx.fillRect(x, y, tileSize, tileSize);
         ctx.fillStyle = colors.powerPellet;
         ctx.beginPath();
         ctx.arc(x + tileSize / 2, y + tileSize / 2, Math.max(2, tileSize * 0.25), 0, Math.PI * 2);
@@ -187,6 +198,8 @@ export class Maze {
       case 'corridor':
       case 'empty':
       default:
+        ctx.fillStyle = colors.background;
+        ctx.fillRect(x, y, tileSize, tileSize);
         break;
     }
   }
