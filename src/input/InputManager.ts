@@ -66,6 +66,8 @@ export class InputManager {
     if (!this.touchActive) return;
     this.touchActive = false;
 
+    if (!event.changedTouches.length) return;
+
     const touch = event.changedTouches[0];
     if (!touch) return;
 

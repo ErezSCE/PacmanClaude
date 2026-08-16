@@ -69,6 +69,11 @@ export class DirectionalControls {
       this.inputManager.setDirection(direction);
     };
 
+    // Both `touchstart` and `click` are registered so mouse/keyboard-driven
+    // clicks still work on non-touch devices. On touch devices this does
+    // NOT double-fire: `event.preventDefault()` in the touchstart handler
+    // suppresses the browser's synthesized `click` event that would
+    // otherwise follow, so a single tap calls `setDirection` exactly once.
     button.addEventListener('click', activate);
     button.addEventListener('touchstart', activate, { passive: false });
 

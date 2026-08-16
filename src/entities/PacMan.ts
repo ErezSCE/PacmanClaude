@@ -1,4 +1,4 @@
-import type { Direction } from '../types/shared';
+import type { Direction, Tile } from '../types/shared';
 import type { Maze } from '../maze/Maze';
 
 const DIRECTION_VECTORS: Record<Direction, { dx: number; dy: number }> = {
@@ -23,6 +23,14 @@ const DEFAULT_SPEED = 8;
 
 /** Seconds between chomp animation frame toggles while moving. */
 const CHOMP_INTERVAL = 0.1;
+
+/**
+ * Maximum timestep (in milliseconds) applied in a single update. Caps the
+ * effective delta when the browser delivers an unusually large frame (e.g.
+ * after the tab was backgrounded), preventing Pac-Man from tunneling through
+ * multiple tiles — and potentially walls — in one step.
+ */
+const MAX_DT_MS = 100;
 
 /**
  * Owns Pac-Man's position, current/queued direction, continuous
@@ -58,12 +66,20 @@ export class PacMan {
   }
 
   /**
+   * Updates Pac-Man's movement speed (tiles per second). Used to vary speed
+   * across levels or during transient states such as power-pellet frenzy.
+   */
+  setSpeed(speed: number): void {
+    this.speed = speed;
+  }
+
+  /**
    * Advances Pac-Man's position for the given timestep (in milliseconds),
    * applying queued turns, wall-blocked stopping, tunnel wraparound, and
    * chomp animation updates. Deterministic for a fixed-timestep loop.
    */
   update(dtMs: number, maze: Maze): void {
-    const dt = dtMs / 1000;
+    const dt = Math.min(dtMs, MAX_DT_MS) / 1000;
     const grid = maze.getGrid();
     const rows = grid.length;
     const cols = rows > 0 ? grid[0].length : 0;
@@ -147,11 +163,14 @@ export class PacMan {
   }
 
   /**
-   * Checks whether Pac-Man can advance one step in `direction`. Out-of-range
-   * target coordinates are wrapped modulo the grid dimensions so that tunnel
-   * rows (open tiles at both edges) are treated as connected — the check
-   * always looks at the tile Pac-Man would actually occupy next, including
-   * after a tunnel wraparound.
+   * Checks whether Pac-Man can advance one step in `direction`. Only the
+   * horizontal (column) axis wraps modulo the grid width, matching classic
+   * Pac-Man's side tunnels — a target column that leaves through the left
+   * or right edge reappears on the opposite side. The vertical axis never
+   * wraps: a target row outside the grid (or any coordinate `getMaze`
+   * doesn't recognize) has no known tile and is always treated as
+   * impassable, so Pac-Man cannot walk off the top/bottom of a maze that
+   * lacks a full boundary wall.
    */
   private canMove(direction: Direction, maze: Maze): boolean {
     const grid = maze.getGrid();
@@ -160,13 +179,16 @@ export class PacMan {
     const { row, col } = this.currentTile();
     const { dx, dy } = DIRECTION_VECTORS[direction];
 
-    let targetRow = row + dy;
+    const targetRow = row + dy;
     let targetCol = col + dx;
     if (cols > 0) targetCol = ((targetCol % cols) + cols) % cols;
-    if (rows > 0) targetRow = ((targetRow % rows) + rows) % rows;
 
-    const tile = maze.getTile(targetRow, targetCol);
-    return tile !== 'wall';
+    // `getTile` is typed to always return a `Tile`, but the target tile is
+    // treated defensively as possibly `undefined` in case a maze
+    // implementation doesn't guarantee boundary walls on all edges — any
+    // coordinate without a known tile is treated as impassable.
+    const tile: Tile | undefined = maze.getTile(targetRow, targetCol);
+    return tile !== undefined && tile !== 'wall';
   }
 
   private updateChompAnimation(dt: number): void {
