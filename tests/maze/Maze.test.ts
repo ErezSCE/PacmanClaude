@@ -11,7 +11,7 @@ function createFakeContext() {
   const calls: { type: string; fillStyle: string; args: number[] }[] = [];
   const ctx = {
     fillStyle: '#000000',
-    fillRect: vi.fn(function (this: any, x: number, y: number, w: number, h: number) {
+    fillRect: vi.fn((x: number, y: number, w: number, h: number) => {
       calls.push({ type: 'fillRect', fillStyle: ctx.fillStyle, args: [x, y, w, h] });
     }),
     beginPath: vi.fn(() => {

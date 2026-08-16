@@ -159,7 +159,7 @@ export class Maze {
     // manually set to 'dot' without going through this method), the
     // remaining count should never be allowed to go negative.
     this.dotsRemaining = Math.max(0, this.dotsRemaining - 1);
-    this.cacheValid = false;
+    this.patchCacheTile(row, col);
     return true;
   }
 
@@ -176,7 +176,7 @@ export class Maze {
     this.grid[row][col] = 'empty';
     // Same defensive clamp as `eatDot` — never let the count go negative.
     this.pelletsRemaining = Math.max(0, this.pelletsRemaining - 1);
-    this.cacheValid = false;
+    this.patchCacheTile(row, col);
     return true;
   }
 
@@ -216,6 +216,11 @@ export class Maze {
     }
 
     if (this.offscreenSource && this.offscreenContext) {
+      // `ensureOffscreenContext` prefers a standard `HTMLCanvasElement` as
+      // `offscreenSource` whenever `document` is available specifically so
+      // this `drawImage()` call is portable across Chrome, Firefox,
+      // Safari and Edge — an `OffscreenCanvas` source has had inconsistent
+      // support here in some Safari releases.
       ctx.drawImage(this.offscreenSource, 0, 0);
       return;
     }
@@ -247,6 +252,31 @@ export class Maze {
   }
 
   /**
+   * Surgically repaints a single tile's cell in the offscreen cache canvas
+   * instead of invalidating (and later fully redrawing all ~400 tiles of)
+   * the whole cache. `eatDot`/`eatPowerPellet` call this so the per-frame
+   * cost of a consumable being eaten stays O(1) rather than O(width *
+   * height) — important since this can happen on essentially every frame
+   * while dots are being eaten at 60fps.
+   *
+   * If the cache hasn't been built yet (or isn't available in this
+   * environment), there is nothing to patch: `cacheValid` is left as-is and
+   * the next `render()` call will build/refresh the cache from scratch,
+   * naturally picking up this tile's new value from `this.grid`.
+   */
+  private patchCacheTile(row: number, col: number): void {
+    if (!this.cacheValid || !this.offscreenContext || !this.cachedColors) return;
+    this.renderTile(
+      this.offscreenContext,
+      this.grid[row][col],
+      row,
+      col,
+      this.cachedTileSize,
+      this.cachedColors,
+    );
+  }
+
+  /**
    * Lazily creates (or resizes) the offscreen cache canvas and returns its
    * 2D context, or `null` if this environment has no usable Canvas support.
    */
@@ -269,15 +299,15 @@ export class Maze {
       return this.offscreenContext;
     }
 
-    if (typeof OffscreenCanvas !== 'undefined') {
-      const canvas = new OffscreenCanvas(width, height);
-      const context = canvas.getContext('2d');
-      if (!context) return null;
-      this.offscreenSource = canvas;
-      this.offscreenContext = context as unknown as TileRenderContext;
-      return this.offscreenContext;
-    }
-
+    // Prefer a standard `HTMLCanvasElement` as the offscreen cache surface
+    // whenever `document` is available (i.e. running in a real browser
+    // tab). `ctx.drawImage()` on a standard `CanvasRenderingContext2D`
+    // reliably accepts an `HTMLCanvasElement` as its source across every
+    // target browser (Chrome, Firefox, Safari, Edge). Some Safari releases
+    // have historically rejected an `OffscreenCanvas` as a `drawImage()`
+    // source on a standard 2D context, so `OffscreenCanvas` is used only as
+    // a fallback for non-DOM environments (e.g. a Web Worker rendering
+    // path) where no `document` exists at all.
     if (typeof document !== 'undefined' && typeof document.createElement === 'function') {
       const canvas = document.createElement('canvas');
       canvas.width = width;
@@ -286,6 +316,15 @@ export class Maze {
       if (!context) return null;
       this.offscreenSource = canvas;
       this.offscreenContext = context;
+      return this.offscreenContext;
+    }
+
+    if (typeof OffscreenCanvas !== 'undefined') {
+      const canvas = new OffscreenCanvas(width, height);
+      const context = canvas.getContext('2d');
+      if (!context) return null;
+      this.offscreenSource = canvas;
+      this.offscreenContext = context as unknown as TileRenderContext;
       return this.offscreenContext;
     }
 

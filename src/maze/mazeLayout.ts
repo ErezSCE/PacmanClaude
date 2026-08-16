@@ -92,6 +92,12 @@ function computeTile(row: number, col: number): Tile {
   return 'dot';
 }
 
+// NOTE: `[17, 18]` sits only two rows above the bottom wall (grid rows are
+// 0-20), so the mirrored column bands here create a intentionally tight
+// bottom corridor. If these bands are ever changed, re-run the flood-fill
+// reachability suite in `tests/maze/mazeLayout.test.ts` — it walks every
+// dot/pellet tile from Pac-Man's start position and fails if any tile in a
+// band like this becomes an unreachable pocket.
 function isInnerWallPillar(row: number, col: number): boolean {
   const mirroredCol = MAZE_WIDTH - 1 - col;
   const pillarRowBands: ReadonlyArray<readonly [number, number]> = [
