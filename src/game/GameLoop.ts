@@ -1,17 +1,12 @@
 /**
- * Fixed-timestep requestAnimationFrame loop that drives update() and render()
- * every frame, coordinating entities, collisions, scoring and level state.
+ * Fixed-timestep requestAnimationFrame loop.
  */
 
 let animationFrameId: number | null = null;
 
-/**
- * Starts the game loop with the given update and render callbacks.
- * If a loop is already running, it is stopped before starting the new one.
- */
 export function startGameLoop(
   update: (dt: number) => void,
-  render: () => void,
+  render: (dt: number) => void,
 ): void {
   if (animationFrameId !== null) {
     stopGameLoop();
@@ -26,21 +21,21 @@ export function startGameLoop(
     lastTime = currentTime;
     accumulator += elapsed;
 
+    // Cap accumulator to prevent spiral of death
+    if (accumulator > 200) accumulator = 200;
+
     while (accumulator >= TIMESTEP) {
       update(TIMESTEP);
       accumulator -= TIMESTEP;
     }
 
-    render();
+    render(TIMESTEP);
     animationFrameId = requestAnimationFrame(loop);
   }
 
   animationFrameId = requestAnimationFrame(loop);
 }
 
-/**
- * Stops the game loop.
- */
 export function stopGameLoop(): void {
   if (animationFrameId !== null) {
     cancelAnimationFrame(animationFrameId);

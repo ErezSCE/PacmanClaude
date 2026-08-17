@@ -4,15 +4,16 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite dev",
+    "dev": "vite dev --host",
     "build": "vite build",
-    "preview": "vite preview",
+    "preview": "vite preview --host",
     "test": "vitest run",
     "test:e2e": "playwright test"
   },
   "devDependencies": {
     "@playwright/test": "^1.62.1",
-    "jsdom": "^29.1.1",
+    "@types/node": "^26.2.0",
+    "jsdom": "^25.0.1",
     "typescript": "^5.7.3",
     "vite": "^6.3.5",
     "vite-plugin-pwa": "^1.0.0",
